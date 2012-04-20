@@ -57,17 +57,9 @@
       <Project>{8CDAFD9E-A07F-4975-8AE2-D7C6998999A4}</Project>
       <Name>CH.IoC.TestHost.Interface</Name>
     </ProjectReference>
-    <ProjectReference Include="..\CH.IoC.TestHost\CH.IoC.TestHost.csproj">
-      <Project>{A35E98A0-BB02-4B12-9DCF-7C695F8D9EDE}</Project>
-      <Name>CH.IoC.TestHost</Name>
-    </ProjectReference>
     <ProjectReference Include="..\CH.IoC.TestPlugin.Interface\CH.IoC.TestPlugin.Interface.csproj">
       <Project>{5734DD65-9D18-4F4F-B4CB-98D68C0BB2D3}</Project>
       <Name>CH.IoC.TestPlugin.Interface</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\CH.IoC.TestPlugin\CH.IoC.TestPlugin.csproj">
-      <Project>{4D748845-33CA-46AB-A6EC-EC6E32152617}</Project>
-      <Name>CH.IoC.TestPlugin</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
