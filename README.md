@@ -27,3 +27,5 @@ All infrastructure components should reference this assembly, and not the Infras
 ## CH.IoC.Test...
 
 These assemblies are a test/example of how to use the system.
+
+Note: Since there are no direct dependencies between .Test and .TestHost and .TestPlugin you must build .TestHost and .TestPlugin explicitly before running .Test. This is by design, since we want to decouple the execution environment for the concrete components it executes.
