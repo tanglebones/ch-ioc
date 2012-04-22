@@ -60,6 +60,7 @@
     <Compile Include="Windsor.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="CH.IoC.Infrastructure.nuspec" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
