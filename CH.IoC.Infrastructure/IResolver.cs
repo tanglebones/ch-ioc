@@ -1,6 +1,6 @@
 namespace CH.IoC.Intrasturcture
 {
-    public interface IResolve
+    public interface IResolver
     {
         T Resolve<T>();
     }

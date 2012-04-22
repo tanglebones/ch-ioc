@@ -8,8 +8,8 @@
     <ProjectGuid>{3202B87E-3586-4A48-ABFE-406404B7C28D}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>CH.IoC.Attributes</RootNamespace>
-    <AssemblyName>CH.IoC.Attributes</AssemblyName>
+    <RootNamespace>CH.IoC.Infrastructure.Wiring</RootNamespace>
+    <AssemblyName>CH.IoC.Infrastructure.Wiring</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>

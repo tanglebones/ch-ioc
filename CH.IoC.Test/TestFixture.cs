@@ -5,19 +5,30 @@ using NUnit.Framework;
 
 namespace CH.IoC.Test
 {
-    [TestFixture]
-    public class TestFixture
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1001:TypesThatOwnDisposableFieldsShouldBeDisposable"), TestFixture]
+    public sealed class TestFixture
     {
+        private Resolver _resolver;
+
+        [SetUp]
+        public void SetUp()
+        {
+            _resolver = new Resolver("CH.IoC");
+        }
+
         [Test]
         public void Test()
         {
-            using (var resolver = new Resolver("CH.IoC"))
-            {
-                var testHost = resolver.Resolve<ITestHost>();
-                var results = testHost.Run("test").ToArray();
-                Assert.That(results.Any(x => x == "ONE: test"));
-                Assert.That(results.Any(x => x == "TWO: test"));
-            }
+            var testHost = _resolver.Resolve<ITestHost>();
+            var results = testHost.Run("test").ToArray();
+            Assert.That(results.Any(x => x == "ONE: test"));
+            Assert.That(results.Any(x => x == "TWO: test"));
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            _resolver.Dispose();
         }
     }
 }

@@ -40,9 +40,9 @@
     <Compile Include="TestHost.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\CH.IoC.Attributes\CH.IoC.Attributes.csproj">
+    <ProjectReference Include="..\CH.IoC.Infrastructure.Wiring\CH.IoC.Infrastructure.Wiring.csproj">
       <Project>{3202B87E-3586-4A48-ABFE-406404B7C28D}</Project>
-      <Name>CH.IoC.Attributes</Name>
+      <Name>CH.IoC.Infrastructure.Wiring</Name>
     </ProjectReference>
     <ProjectReference Include="..\CH.IoC.TestHost.Interface\CH.IoC.TestHost.Interface.csproj">
       <Project>{8CDAFD9E-A07F-4975-8AE2-D7C6998999A4}</Project>

@@ -3,7 +3,7 @@ using Castle.Windsor;
 
 namespace CH.IoC.Intrasturcture
 {
-    public sealed class Resolver : IResolve, IDisposable
+    public sealed class Resolver : IResolver, IDisposable
     {
         private readonly IWindsorContainer _container;
 

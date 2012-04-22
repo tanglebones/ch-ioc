@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 
-[assembly: AssemblyTitle("CH.IoC.Attributes")]
+[assembly: AssemblyTitle("CH.IoC.Infrastructure.Wiring")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("N/A")]
-[assembly: AssemblyProduct("CH.IoC.Attributes")]
+[assembly: AssemblyProduct("CH.IoC.Infrastructure.Wiring")]
 [assembly: AssemblyCopyright("Copyright © 2012 Clifford Hammerschmidt")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]

@@ -1,13 +1,13 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using CH.IoC.Attributes;
+using CH.IoC.Infrastructure.Wiring;
 using CH.IoC.TestHost.Interface;
 using CH.IoC.TestPlugin.Interface;
 
 namespace CH.IoC.TestHost
 {
     [Wire]
-    internal class TestHost : ITestHost
+    internal sealed class TestHost : ITestHost
     {
         private readonly IEnumerable<IDoSomething> _plugins;
 

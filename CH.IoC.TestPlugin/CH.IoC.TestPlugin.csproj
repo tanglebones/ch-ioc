@@ -41,9 +41,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\CH.IoC.Attributes\CH.IoC.Attributes.csproj">
+    <ProjectReference Include="..\CH.IoC.Infrastructure.Wiring\CH.IoC.Infrastructure.Wiring.csproj">
       <Project>{3202B87E-3586-4A48-ABFE-406404B7C28D}</Project>
-      <Name>CH.IoC.Attributes</Name>
+      <Name>CH.IoC.Infrastructure.Wiring</Name>
     </ProjectReference>
     <ProjectReference Include="..\CH.IoC.TestPlugin.Interface\CH.IoC.TestPlugin.Interface.csproj">
       <Project>{5734DD65-9D18-4F4F-B4CB-98D68C0BB2D3}</Project>

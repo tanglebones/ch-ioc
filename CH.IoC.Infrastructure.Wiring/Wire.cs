@@ -1,8 +1,8 @@
 using System;
 
-namespace CH.IoC.Attributes
+namespace CH.IoC.Infrastructure.Wiring
 {
-    public class Wire : Attribute
+    public sealed class Wire : Attribute
     {
         public Type InterfaceType { get; private set; }
 
