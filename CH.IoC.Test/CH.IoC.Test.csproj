@@ -49,9 +49,9 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\CH.IoC.Infrastructure\CH.IoC.Intrastructure.csproj">
+    <ProjectReference Include="..\CH.IoC.Infrastructure\CH.IoC.Infrastructure.csproj">
       <Project>{9DAD3974-B3F2-4F49-BFF2-43234AD4DBA8}</Project>
-      <Name>CH.IoC.Intrastructure</Name>
+      <Name>CH.IoC.Infrastructure</Name>
     </ProjectReference>
     <ProjectReference Include="..\CH.IoC.TestHost.Interface\CH.IoC.TestHost.Interface.csproj">
       <Project>{8CDAFD9E-A07F-4975-8AE2-D7C6998999A4}</Project>

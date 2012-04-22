@@ -5,12 +5,12 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 
-[assembly: AssemblyTitle("CH.Kitara.IoC")]
+[assembly: AssemblyTitle("CH.IoC.Infrastructure")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("CH.Kitara.IoC")]
-[assembly: AssemblyCopyright("Copyright ©  2012")]
+[assembly: AssemblyProduct("CH.IoC.Infrastructure")]
+[assembly: AssemblyCopyright("Copyright © 2012 Clifford Hammerschmidt")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

@@ -8,8 +8,8 @@
     <ProjectGuid>{9DAD3974-B3F2-4F49-BFF2-43234AD4DBA8}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>CH.IoC.Intrasturcture</RootNamespace>
-    <AssemblyName>CH.IoC.Intrasturcture</AssemblyName>
+    <RootNamespace>CH.IoC.Infrasturcture</RootNamespace>
+    <AssemblyName>CH.IoC.Infrasturcture</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>

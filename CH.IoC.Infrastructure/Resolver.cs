@@ -1,7 +1,7 @@
 using System;
 using Castle.Windsor;
 
-namespace CH.IoC.Intrasturcture
+namespace CH.IoC.Infrasturcture
 {
     public sealed class Resolver : IResolver, IDisposable
     {

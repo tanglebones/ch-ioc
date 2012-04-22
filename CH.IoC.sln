@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CH.IoC.Infrastructure.Wiring", "CH.IoC.Infrastructure.Wiring\CH.IoC.Infrastructure.Wiring.csproj", "{3202B87E-3586-4A48-ABFE-406404B7C28D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CH.IoC.Intrastructure", "CH.IoC.Infrastructure\CH.IoC.Intrastructure.csproj", "{9DAD3974-B3F2-4F49-BFF2-43234AD4DBA8}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CH.IoC.Infrastructure", "CH.IoC.Infrastructure\CH.IoC.Infrastructure.csproj", "{9DAD3974-B3F2-4F49-BFF2-43234AD4DBA8}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{C416E7C7-9FFF-43E4-A74D-1DBD2CD52916}"
 	ProjectSection(SolutionItems) = preProject
@@ -21,6 +21,11 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CH.IoC.TestHost", "CH.IoC.TestHost\CH.IoC.TestHost.csproj", "{A35E98A0-BB02-4B12-9DCF-7C695F8D9EDE}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CH.IoC.TestHost.Interface", "CH.IoC.TestHost.Interface\CH.IoC.TestHost.Interface.csproj", "{8CDAFD9E-A07F-4975-8AE2-D7C6998999A4}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{9D22D3B3-7509-47B6-B096-BC8F86B076B1}"
+	ProjectSection(SolutionItems) = preProject
+		README.md = README.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
