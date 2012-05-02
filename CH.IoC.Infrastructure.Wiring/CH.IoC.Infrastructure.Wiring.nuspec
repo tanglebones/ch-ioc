@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata>
+    <id>CH.Ioc.Infrastructure.Wiring</id>
+    <version>1.0.1</version>
+    <authors>Clifford Hammerschmidt</authors>
+    <owners>Clifford Hammerschmidt</owners>
+    <licenseUrl>http://www.apache.org/licenses/LICENSE-2.0.html</licenseUrl>
+    <projectUrl>https://github.com/tanglebones/ch-ioc</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Wiring attributes used by CH.IoC.Infrastrcuture for marking up infrastructure components of a program.</description>
+    <tags>IoC Automatic Wiring Infrastructure</tags>
+  </metadata>
+</package>
