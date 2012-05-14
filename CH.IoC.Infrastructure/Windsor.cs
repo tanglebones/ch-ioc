@@ -18,12 +18,19 @@ namespace CH.IoC.Infrasturcture
     {
         internal static IWindsorContainer Container(string assemblyPrefix, string log4NetConfigFileName = null)
         {
+            return Container(new[] {assemblyPrefix}, log4NetConfigFileName);
+        }
+
+        internal static IWindsorContainer Container(IEnumerable<string> assemblyPrefixes, string log4NetConfigFileName = null)
+        {
             var container = SetupContainer(log4NetConfigFileName);
             var logger = container.Resolve<ILogger>() ?? new NullLogger();
 
+            var prefixesAsArray = assemblyPrefixes.ToArray();
+            foreach(var assemblyPrefix in prefixesAsArray)
             LoadDynamicAssemblies(assemblyPrefix, logger);
 
-            var assemblies = BuildAssemblyDictionary(assemblyPrefix);
+            var assemblies = BuildAssemblyDictionary(prefixesAsArray);
 
             WireByAttribute(container, assemblies);
             WireByInstaller(logger, container, assemblies);
@@ -46,10 +53,10 @@ namespace CH.IoC.Infrasturcture
             return container;
         }
 
-        private static IDictionary<string, Assembly> BuildAssemblyDictionary(string assemblyPrefix)
+        private static IDictionary<string, Assembly> BuildAssemblyDictionary(IEnumerable<string> assemblyPrefixes)
         {
             var assemblies = new Dictionary<string, Assembly>();
-            foreach (var a in AppDomain.CurrentDomain.GetAssemblies().Where(a => a.FullName.StartsWith(assemblyPrefix)))
+            foreach (var a in AppDomain.CurrentDomain.GetAssemblies().Where(a => assemblyPrefixes.Any(assemblyPrefix => a.FullName.StartsWith(assemblyPrefix))))
                 assemblies[a.FullName] = a;
             return assemblies;
         }
