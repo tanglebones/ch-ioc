@@ -1,5 +1,5 @@
 using System.Linq;
-using CH.IoC.Infrasturcture;
+using CH.IoC.Infrastructure;
 using CH.IoC.TestHost.Interface;
 using NUnit.Framework;
 

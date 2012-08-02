@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Castle.Windsor;
 
-namespace CH.IoC.Infrasturcture
+namespace CH.IoC.Infrastructure
 {
     public sealed class Resolver : IResolver, IDisposable
     {

@@ -12,7 +12,7 @@ using Castle.MicroKernel.Resolvers.SpecializedResolvers;
 using Castle.Windsor;
 using Castle.Windsor.Installer;
 
-namespace CH.IoC.Infrasturcture
+namespace CH.IoC.Infrastructure
 {
     internal static class Windsor
     {

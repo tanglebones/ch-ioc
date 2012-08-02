@@ -1,4 +1,4 @@
-namespace CH.IoC.Infrasturcture
+namespace CH.IoC.Infrastructure
 {
     public interface IResolver
     {

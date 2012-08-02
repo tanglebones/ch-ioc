@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -8,8 +8,8 @@
     <ProjectGuid>{9DAD3974-B3F2-4F49-BFF2-43234AD4DBA8}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>CH.IoC.Infrasturcture</RootNamespace>
-    <AssemblyName>CH.IoC.Infrasturcture</AssemblyName>
+    <RootNamespace>CH.IoC.Infrastructure</RootNamespace>
+    <AssemblyName>CH.IoC.Infrastructure</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
@@ -65,7 +65,9 @@
     <Compile Include="Windsor.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="CH.IoC.Infrastructure.nuspec" />
+    <None Include="CH.IoC.Infrastructure.nuspec">
+      <SubType>Designer</SubType>
+    </None>
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
