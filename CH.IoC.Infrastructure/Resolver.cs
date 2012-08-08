@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using Castle.Core;
 using Castle.Windsor;
 
 namespace CH.IoC.Infrastructure
@@ -21,6 +23,16 @@ namespace CH.IoC.Infrastructure
         public T Resolve<T>()
         {
             return _container.Resolve<T>();
+        }
+
+        public IEnumerable<T> ResolveAll<T>()
+        {
+            return _container.ResolveAll<T>();
+        }
+
+        public IEnumerable<Tuple<string, IEnumerable<string>>> Registered()
+        {
+            return from ComponentModel obj in _container.Kernel.GraphNodes select Tuple.Create(obj.Name, obj.Services.Select(s => s.FullName));
         }
 
         public void Dispose()
