@@ -10,14 +10,14 @@ namespace CH.IoC.Infrastructure
     {
         private readonly IWindsorContainer _container;
 
-        public Resolver(string assemblyPrefix, string log4NetConfigFileName = null)
+        public Resolver(string assemblyPrefix)
         {
-            _container = Windsor.Container(assemblyPrefix, log4NetConfigFileName);
+            _container = Windsor.Container(assemblyPrefix);
         }
 
-        public Resolver(IEnumerable<string> assemblyPrefixes, string log4NetConfigFileName = null)
+        public Resolver(IEnumerable<string> assemblyPrefixes)
         {
-            _container = Windsor.Container(assemblyPrefixes, log4NetConfigFileName);
+            _container = Windsor.Container(assemblyPrefixes);
         }
 
         public T Resolve<T>()

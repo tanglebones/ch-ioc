@@ -5,8 +5,6 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using CH.IoC.Infrastructure.Wiring;
-using Castle.Core.Logging;
-using Castle.Facilities.Logging;
 using Castle.MicroKernel.Registration;
 using Castle.MicroKernel.Resolvers.SpecializedResolvers;
 using Castle.Windsor;
@@ -16,40 +14,33 @@ namespace CH.IoC.Infrastructure
 {
     internal static class Windsor
     {
-        internal static IWindsorContainer Container(string assemblyPrefix, string log4NetConfigFileName = null)
+        internal static IWindsorContainer Container(string assemblyPrefix)
         {
-            return Container(new[] {assemblyPrefix}, log4NetConfigFileName);
+            return Container(new[] {assemblyPrefix});
         }
 
-        internal static IWindsorContainer Container(IEnumerable<string> assemblyPrefixes, string log4NetConfigFileName = null)
+        internal static IWindsorContainer Container(IEnumerable<string> assemblyPrefixes)
         {
-            var container = SetupContainer(log4NetConfigFileName);
-            var logger = container.Resolve<ILogger>() ?? new NullLogger();
+            var container = SetupContainer();
 
             var prefixesAsArray = assemblyPrefixes.ToArray();
             foreach(var assemblyPrefix in prefixesAsArray)
-            LoadDynamicAssemblies(assemblyPrefix, logger);
+            LoadDynamicAssemblies(assemblyPrefix);
 
             var assemblies = BuildAssemblyDictionary(prefixesAsArray);
 
             WireByAttribute(container, assemblies);
-            WireByInstaller(logger, container, assemblies);
+            WireByInstaller(container, assemblies);
 
             return container;
         }
 
         [SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope")]
-        private static WindsorContainer SetupContainer(string log4NetConfigFileName)
+        private static WindsorContainer SetupContainer()
         {
             var container = new WindsorContainer();
 
             container.Kernel.Resolver.AddSubResolver(new CollectionResolver(container.Kernel));
-            if (!String.IsNullOrEmpty(log4NetConfigFileName))
-                container.AddFacility(new LoggingFacility(LoggerImplementation.Log4net, log4NetConfigFileName));
-            else
-            {
-                container.Register(Component.For<ILogger>().Instance(NullLogger.Instance));
-            }
             return container;
         }
 
@@ -61,7 +52,7 @@ namespace CH.IoC.Infrastructure
             return assemblies;
         }
 
-        private static void WireByInstaller(ILogger logger, IWindsorContainer container,
+        private static void WireByInstaller(IWindsorContainer container,
                                             IDictionary<string, Assembly> assemblies)
         {
             foreach (var assembly in assemblies.Values)
@@ -72,7 +63,7 @@ namespace CH.IoC.Infrastructure
                 }
                 catch (Exception ex)
                 {
-                    logger.Warn("IoC install failed for assembly \"" + assembly.FullName + "\": " + ex);
+                    System.Diagnostics.Debug.WriteLine("IoC install failed for assembly \"" + assembly.FullName + "\": " + ex);
                 }
             }
         }
@@ -110,7 +101,7 @@ namespace CH.IoC.Infrastructure
             }
         }
 
-        private static void LoadDynamicAssemblies(string assemblyPrefix, ILogger logger)
+        private static void LoadDynamicAssemblies(string assemblyPrefix)
         {
             foreach (var dll in 
                 new[]
@@ -130,7 +121,7 @@ namespace CH.IoC.Infrastructure
                 }
                 catch (Exception ex)
                 {
-                    logger.Warn("could not load assembly \"" + dll + "\": " + ex);
+                    System.Diagnostics.Debug.WriteLine("could not load assembly \"" + dll + "\": " + ex);
                 }
         }
     }
