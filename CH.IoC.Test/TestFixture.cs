@@ -13,7 +13,7 @@ namespace CH.IoC.Test
         [SetUp]
         public void SetUp()
         {
-            _resolver = new Resolver("CH.IoC");
+            _resolver = new Resolver("CH.IoC.");
         }
 
         [Test]
