@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Linq;
 using CH.IoC.Infrastructure;
 using CH.IoC.TestHost.Interface;
@@ -23,6 +24,11 @@ namespace CH.IoC.Test
             var results = testHost.Run("test").ToArray();
             Assert.That(results.Any(x => x == "ONE: test"));
             Assert.That(results.Any(x => x == "TWO: test"));
+            var registered = _resolver.Registered();
+            foreach (var reg in registered)
+            {
+                Debug.WriteLine(reg.Item1 + " " + string.Join(",", reg.Item2));
+            }
         }
 
         [Test]

@@ -15,7 +15,7 @@ namespace CH.IoC.TestPlugin
 
         public string DoSomething(string toThis)
         {
-            return _onePrefix + ": " + toThis;
+            return _onePrefix.Prefix + ": " + toThis;
         }
     }
 

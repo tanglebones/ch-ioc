@@ -146,7 +146,7 @@ namespace CH.IoC.Infrastructure
 
         private void Register(Type type, Type interfaceType)
         {
-            var name = type.FullName + "^as^" + interfaceType.FullName;
+            var name = type.FullName;
             if (!_components.ContainsKey(interfaceType.FullName))
             {
                 _components[interfaceType.FullName] = new List<ComponentInfo>();
