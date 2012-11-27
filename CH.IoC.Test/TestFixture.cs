@@ -17,9 +17,18 @@ namespace CH.IoC.Test
         }
 
         [Test]
-        public void Test()
+        public void TestArray()
         {
-            var testHost = _resolver.Resolve<ITestHost>();
+            var testHost = _resolver.Resolve<ITestHostArr>();
+            var results = testHost.Run("test").ToArray();
+            Assert.That(results.Any(x => x == "ONE: test"));
+            Assert.That(results.Any(x => x == "TWO: test"));
+        }
+
+        [Test]
+        public void TestEnum()
+        {
+            var testHost = _resolver.Resolve<ITestHostEnum>();
             var results = testHost.Run("test").ToArray();
             Assert.That(results.Any(x => x == "ONE: test"));
             Assert.That(results.Any(x => x == "TWO: test"));

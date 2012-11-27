@@ -78,7 +78,8 @@ namespace CH.IoC.Infrastructure
                 {
                     dependencyInfo.Instance = Resolve(dependencyInfo.ServiceName);
                 }
-                if (dependencyInfo.Modifier == DependencyInfo.TypeModifier.Array)
+                if (dependencyInfo.Modifier == DependencyInfo.TypeModifier.Array
+                    || dependencyInfo.Modifier == DependencyInfo.TypeModifier.Enum)
                 {
                     dependencyInfo.Instance = ResolveAll(dependencyInfo.ServiceName);
                 }
@@ -178,6 +179,14 @@ namespace CH.IoC.Infrastructure
                     .Select(
                         x =>
                             {
+                                if (x.ParameterType.Name == "IEnumerable`1")
+                                {
+                                    return new DependencyInfo
+                                        {
+                                            Modifier = DependencyInfo.TypeModifier.Enum,
+                                            ServiceName = x.ParameterType.GetGenericArguments().First().FullName
+                                        };
+                                }
                                 if (x.ParameterType.IsArray)
                                 {
                                     return new DependencyInfo
@@ -237,6 +246,7 @@ namespace CH.IoC.Infrastructure
             {
                 None,
                 Array,
+                Enum
             };
 
             public object Instance;

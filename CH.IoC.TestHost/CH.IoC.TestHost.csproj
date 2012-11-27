@@ -37,7 +37,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="TestHost.cs" />
+    <Compile Include="TestHostArr.cs" />
+    <Compile Include="TestHostEnum.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\CH.IoC.Infrastructure.Wiring\CH.IoC.Infrastructure.Wiring.csproj">
