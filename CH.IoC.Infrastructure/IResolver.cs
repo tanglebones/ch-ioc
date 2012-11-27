@@ -5,8 +5,8 @@ namespace CH.IoC.Infrastructure
 {
     public interface IResolver
     {
-        T Resolve<T>();
-        IEnumerable<T> ResolveAll<T>();
+        T Resolve<T>() where T:class;
+        T[] ResolveAll<T>() where T : class;
         IEnumerable<Tuple<string, IEnumerable<string>>> Registered();
     }
 }

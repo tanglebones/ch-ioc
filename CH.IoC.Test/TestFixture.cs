@@ -8,7 +8,7 @@ namespace CH.IoC.Test
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1001:TypesThatOwnDisposableFieldsShouldBeDisposable"), TestFixture]
     public sealed class TestFixture
     {
-        private Resolver _resolver;
+        private IResolver _resolver;
 
         [SetUp]
         public void SetUp()
@@ -23,12 +23,6 @@ namespace CH.IoC.Test
             var results = testHost.Run("test").ToArray();
             Assert.That(results.Any(x => x == "ONE: test"));
             Assert.That(results.Any(x => x == "TWO: test"));
-        }
-
-        [TearDown]
-        public void TearDown()
-        {
-            _resolver.Dispose();
         }
     }
 }

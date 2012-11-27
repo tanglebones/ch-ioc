@@ -9,9 +9,9 @@ namespace CH.IoC.TestHost
     [Wire]
     internal sealed class TestHost : ITestHost
     {
-        private readonly IEnumerable<IDoSomething> _plugins;
+        private readonly IDoSomething[] _plugins;
 
-        public TestHost(IEnumerable<IDoSomething> plugins)
+        public TestHost(IDoSomething[] plugins)
         {
             _plugins = plugins;
         }
