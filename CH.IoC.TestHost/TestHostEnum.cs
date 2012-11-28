@@ -6,12 +6,20 @@ using CH.IoC.TestPlugin.Interface;
 
 namespace CH.IoC.TestHost
 {
-    [Wire]
-    internal sealed class TestHost : ITestHost
+    [Wirer]
+    internal sealed class TestHostEnumWirer
+    {
+        public static ITestHostEnum Wire(IEnumerable<IDoSomething> plugins)
+        {
+            return new TestHostEnum(plugins);
+        }
+    }
+
+    internal sealed class TestHostEnum : ITestHostEnum
     {
         private readonly IEnumerable<IDoSomething> _plugins;
 
-        public TestHost(IEnumerable<IDoSomething> plugins)
+        public TestHostEnum(IEnumerable<IDoSomething> plugins)
         {
             _plugins = plugins;
         }
