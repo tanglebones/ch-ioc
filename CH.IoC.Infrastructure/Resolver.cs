@@ -87,7 +87,16 @@ namespace CH.IoC.Infrastructure
                     d =>d.Instance
                 )
                 .ToArray();
-            componentInfo.Instance = componentInfo.Ctor.Invoke(parameters);
+
+            if (componentInfo.Ctor != null)
+            {
+                componentInfo.Instance = componentInfo.Ctor.Invoke(parameters);
+            }
+            else if (componentInfo.MCtor != null)
+            {
+                componentInfo.Instance = componentInfo.MCtor.Invoke(null, parameters);
+            }
+
             return componentInfo.Instance;
         }
 
@@ -116,7 +125,46 @@ namespace CH.IoC.Infrastructure
                         var mi = type.GetMethod("Wire");
                         if (mi != null && mi.IsStatic)
                         {
-                            mi.Invoke(null, new object[] {this});
+                            var name = type.FullName;
+                            var interfaceType = mi.ReturnType;
+                            if (!_components.ContainsKey(interfaceType.FullName))
+                            {
+                                _components[interfaceType.FullName] = new List<ComponentInfo>();
+                            }
+                            var componentInfos = _components[interfaceType.FullName];
+                            var componentInfo = new ComponentInfo { Name = name, Type = type, ServiceType = interfaceType };
+                            componentInfo.MCtor = mi;
+                            componentInfo.Dependencies =
+                                mi
+                                    .GetParameters()
+                                    .Select(
+                                        x =>
+                                        {
+                                            if (x.ParameterType.Name == "IEnumerable`1")
+                                            {
+                                                return new DependencyInfo
+                                                {
+                                                    Modifier = DependencyInfo.TypeModifier.Enum,
+                                                    ServiceName = x.ParameterType.GetGenericArguments().First().FullName
+                                                };
+                                            }
+                                            if (x.ParameterType.IsArray)
+                                            {
+                                                return new DependencyInfo
+                                                {
+                                                    Modifier = DependencyInfo.TypeModifier.Array,
+                                                    ServiceName = x.ParameterType.GetElementType().FullName
+                                                };
+                                            }
+                                            return new DependencyInfo
+                                            {
+                                                Modifier = DependencyInfo.TypeModifier.None,
+                                                ServiceName = x.ParameterType.FullName
+                                            };
+                                        }
+                                    ).ToArray();
+
+                            componentInfos.Add(componentInfo);
                         }
                     }
                 }
@@ -254,6 +302,7 @@ namespace CH.IoC.Infrastructure
             public Type @Type;
             public ConstructorInfo Ctor;
             public Type ServiceType;
+            public MethodInfo MCtor;
         }
 
         private class DependencyInfo
@@ -268,22 +317,6 @@ namespace CH.IoC.Infrastructure
             public object Instance;
             public TypeModifier Modifier;
             public string ServiceName;
-        }
-
-
-        void IResolver.Register<T>(T instance)
-        {
-            var type = instance.GetType();
-            var interfaceType = typeof (T);
-
-            var name = type.FullName;
-            if (!_components.ContainsKey(interfaceType.FullName))
-            {
-                _components[interfaceType.FullName] = new List<ComponentInfo>();
-            }
-            var componentInfos = _components[interfaceType.FullName];
-            var componentInfo = new ComponentInfo { Name = name, Type = type, ServiceType = interfaceType, Instance = instance, Dependencies = Enumerable.Empty<DependencyInfo>()};
-            componentInfos.Add(componentInfo);
         }
 
         IEnumerable<Tuple<string, IEnumerable<string>>> IResolver.Registered()

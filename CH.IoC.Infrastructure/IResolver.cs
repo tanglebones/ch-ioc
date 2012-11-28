@@ -7,7 +7,6 @@ namespace CH.IoC.Infrastructure
     {
         T Resolve<T>() where T:class;
         T[] ResolveAll<T>() where T : class;
-        void Register<T>(T instance);
         IEnumerable<Tuple<string, IEnumerable<string>>> Registered();
     }
 }
