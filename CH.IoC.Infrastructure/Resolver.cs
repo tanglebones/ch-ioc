@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -74,13 +75,10 @@ namespace CH.IoC.Infrastructure
 
         private object Instance(ComponentInfo componentInfo)
         {
-            if (componentInfo == null) return null;
             if (componentInfo.Instance != null) return componentInfo.Instance;
 
             foreach (var dependencyInfo in componentInfo.Dependencies)
             {
-                if (dependencyInfo.Instance != null) continue;
-
                 if (dependencyInfo.Modifier == DependencyInfo.TypeModifier.None)
                 {
                     dependencyInfo.Instance = Resolve(dependencyInfo.ServiceName);
@@ -135,13 +133,7 @@ namespace CH.IoC.Infrastructure
                                     .StartsWith(assemblyPrefix)
                             )
                     )
-                    .Reverse() // if an assembly is loaded twice we want the one loaded later, not the earlier.
-                    .Where(a =>
-                        {
-                            if (seen.Contains(a.FullName)) return false;
-                            seen.Add(a.FullName);
-                            return true;
-                        }) // remove duplicates, keeper older entries in order.
+                    .Where(a => NotAlreadySeen(seen, a)) // remove duplicates, keeper older entries in order.
                     .ToArray()
                 ;
 
@@ -185,6 +177,14 @@ namespace CH.IoC.Infrastructure
             }
         }
 
+        [ExcludeFromCodeCoverage]
+        private static bool NotAlreadySeen(HashSet<string> seen, Assembly a)
+        {
+            if (seen.Contains(a.FullName)) return false;
+            seen.Add(a.FullName);
+            return true;
+        }
+
         private void RegisterWired(Type type, MethodInfo mi)
         {
             var name = type.FullName;
@@ -199,32 +199,8 @@ namespace CH.IoC.Infrastructure
             componentInfo.Dependencies =
                 mi
                     .GetParameters()
-                    .Select(
-                        x =>
-                            {
-                                if (x.ParameterType.Name == "IEnumerable`1")
-                                {
-                                    return new DependencyInfo
-                                        {
-                                            Modifier = DependencyInfo.TypeModifier.Enum,
-                                            ServiceName = x.ParameterType.GetGenericArguments().First().FullName
-                                        };
-                                }
-                                if (x.ParameterType.IsArray)
-                                {
-                                    return new DependencyInfo
-                                        {
-                                            Modifier = DependencyInfo.TypeModifier.Array,
-                                            ServiceName = x.ParameterType.GetElementType().FullName
-                                        };
-                                }
-                                return new DependencyInfo
-                                    {
-                                        Modifier = DependencyInfo.TypeModifier.None,
-                                        ServiceName = x.ParameterType.FullName
-                                    };
-                            }
-                    ).ToArray();
+                    .Select(DependencyInfoFromParameterInfo)
+                    .ToArray();
 
             componentInfos.Add(componentInfo);
         }
@@ -261,34 +237,35 @@ namespace CH.IoC.Infrastructure
             componentInfo.Dependencies =
                 ctor
                     .GetParameters()
-                    .Select(
-                        x =>
-                            {
-                                if (x.ParameterType.Name == "IEnumerable`1")
-                                {
-                                    return new DependencyInfo
-                                        {
-                                            Modifier = DependencyInfo.TypeModifier.Enum,
-                                            ServiceName = x.ParameterType.GetGenericArguments().First().FullName
-                                        };
-                                }
-                                if (x.ParameterType.IsArray)
-                                {
-                                    return new DependencyInfo
-                                        {
-                                            Modifier = DependencyInfo.TypeModifier.Array,
-                                            ServiceName = x.ParameterType.GetElementType().FullName
-                                        };
-                                }
-                                return new DependencyInfo
-                                    {
-                                        Modifier = DependencyInfo.TypeModifier.None,
-                                        ServiceName = x.ParameterType.FullName
-                                    };
-                            }
-                    ).ToArray();
+                    .Select(DependencyInfoFromParameterInfo)
+                    .ToArray();
 
             componentInfos.Add(componentInfo);
+        }
+
+        private static DependencyInfo DependencyInfoFromParameterInfo(ParameterInfo x)
+        {
+            if (x.ParameterType.Name == "IEnumerable`1")
+            {
+                return new DependencyInfo
+                    {
+                        Modifier = DependencyInfo.TypeModifier.Enum,
+                        ServiceName = x.ParameterType.GetGenericArguments().First().FullName
+                    };
+            }
+            if (x.ParameterType.IsArray)
+            {
+                return new DependencyInfo
+                    {
+                        Modifier = DependencyInfo.TypeModifier.Array,
+                        ServiceName = x.ParameterType.GetElementType().FullName
+                    };
+            }
+            return new DependencyInfo
+                {
+                    Modifier = DependencyInfo.TypeModifier.None,
+                    ServiceName = x.ParameterType.FullName
+                };
         }
 
         private static void LoadDynamicAssemblies(IEnumerable<string> assemblyPrefixes)
@@ -327,6 +304,12 @@ namespace CH.IoC.Infrastructure
             // We only load assemblies not already loaded.
             // This can cause issues with app domain isolation!
 
+            LoadDlls(dlls);
+        }
+
+        [ExcludeFromCodeCoverage]
+        private static void LoadDlls(string[] dlls)
+        {
             foreach (var dll in dlls)
                 try
                 {
@@ -335,6 +318,7 @@ namespace CH.IoC.Infrastructure
                 catch (Exception ex)
                 {
                     Debug.WriteLine("could not load assembly \"" + dll + "\": " + ex);
+                    throw;
                 }
         }
 

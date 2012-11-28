@@ -3,7 +3,7 @@ using CH.IoC.TestPlugin.Interface;
 
 namespace CH.IoC.TestPlugin
 {
-    [Wire]
+    [Wire(typeof(IDoSomething))]
     internal sealed class DoSomethingTwo : IDoSomething
     {
         public string DoSomething(string toThis)
