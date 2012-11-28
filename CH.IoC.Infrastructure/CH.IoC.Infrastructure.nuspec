@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
   <metadata>
     <id>CH.Ioc.Infrastructure</id>
-    <version>2.0</version>
+    <version>3.0.0</version>
     <authors>Clifford Hammerschmidt</authors>
     <owners>Clifford Hammerschmidt</owners>
     <licenseUrl>http://www.apache.org/licenses/LICENSE-2.0.html</licenseUrl>
@@ -11,9 +11,7 @@
     <description>IoC wiring helper for setting up infrastructure components of a program.</description>
     <tags>IoC Automatic Wiring Infrastructure</tags>
     <dependencies>
-      <dependency id="CH.IoC.Infrastructure.Wiring" version="1.0.1"/>
-      <dependency id="Castle.Core" version="3.0" />
-      <dependency id="Castle.Windsor" version="3.0" />
+      <dependency id="CH.IoC.Infrastructure.Wiring" version="3.0.0"/>
     </dependencies>
   </metadata>
 </package>
