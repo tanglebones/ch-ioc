@@ -36,11 +36,6 @@ namespace CH.IoC.Infrastructure
             return ((object[]) o).Cast<T>().ToArray();
         }
 
-        public IEnumerable<Tuple<string, IEnumerable<string>>> Registered()
-        {
-            return _components.Select(kvp => Tuple.Create(kvp.Key, kvp.Value.Select(c => c.Name)));
-        }
-
         private object Resolve(string serviceName)
         {
             object o = null;
@@ -105,6 +100,27 @@ namespace CH.IoC.Infrastructure
             var assemblies = BuildAssemblyDictionary(prefixesAsArray);
 
             WireByAttribute(assemblies);
+            WiredByAttribute(assemblies);
+        }
+
+        private void WiredByAttribute(IDictionary<string, Assembly> assemblies)
+        {
+            foreach (var assembly in assemblies.Values)
+            {
+                var types = assembly.GetTypes();
+                foreach (var type in types)
+                {
+                    var attrs = type.GetCustomAttributes(typeof(Wirer), true);
+                    if (attrs.Length > 0)
+                    {
+                        var mi = type.GetMethod("Wire");
+                        if (mi != null && mi.IsStatic)
+                        {
+                            mi.Invoke(null, new object[] {this});
+                        }
+                    }
+                }
+            }
         }
 
         private static IDictionary<string, Assembly> BuildAssemblyDictionary(IEnumerable<string> assemblyPrefixes)
@@ -252,6 +268,27 @@ namespace CH.IoC.Infrastructure
             public object Instance;
             public TypeModifier Modifier;
             public string ServiceName;
+        }
+
+
+        void IResolver.Register<T>(T instance)
+        {
+            var type = instance.GetType();
+            var interfaceType = typeof (T);
+
+            var name = type.FullName;
+            if (!_components.ContainsKey(interfaceType.FullName))
+            {
+                _components[interfaceType.FullName] = new List<ComponentInfo>();
+            }
+            var componentInfos = _components[interfaceType.FullName];
+            var componentInfo = new ComponentInfo { Name = name, Type = type, ServiceType = interfaceType, Instance = instance, Dependencies = Enumerable.Empty<DependencyInfo>()};
+            componentInfos.Add(componentInfo);
+        }
+
+        IEnumerable<Tuple<string, IEnumerable<string>>> IResolver.Registered()
+        {
+            return _components.Select(kvp => Tuple.Create(kvp.Key, kvp.Value.Select(c => c.Name)));
         }
     }
 }
