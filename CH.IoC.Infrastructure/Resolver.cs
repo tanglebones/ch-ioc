@@ -298,6 +298,7 @@ namespace CH.IoC.Infrastructure
                     AppDomain
                         .CurrentDomain
                         .GetAssemblies()
+                        .Where(a=>!a.IsDynamic)
                         .Select(
                             a =>
                             Path.GetFileNameWithoutExtension(a.Location)

@@ -41,7 +41,9 @@
     <Compile Include="Wirer.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="CH.IoC.Infrastructure.Wiring.nuspec" />
+    <None Include="CH.IoC.Infrastructure.Wiring.nuspec">
+      <SubType>Designer</SubType>
+    </None>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
