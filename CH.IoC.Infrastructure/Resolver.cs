@@ -25,7 +25,10 @@ namespace CH.IoC.Infrastructure
 
         T IResolver.Resolve<T>()
         {
-            return (T) Resolve(typeof (T).FullName);
+            var serviceName = typeof (T).FullName;
+            var o = Resolve(serviceName);
+
+            return (T) o;
         }
 
         T[] IResolver.ResolveAll<T>()
@@ -36,12 +39,21 @@ namespace CH.IoC.Infrastructure
             return ((object[]) o).Cast<T>().ToArray();
         }
 
+        IEnumerable<Tuple<string, IEnumerable<string>>> IResolver.Registered()
+        {
+            return _components.Select(kvp => Tuple.Create(kvp.Key, kvp.Value.Select(c => c.Name)));
+        }
+
         private object Resolve(string serviceName)
         {
             object o = null;
             IList<ComponentInfo> componentInfos;
             if (_components.TryGetValue(serviceName, out componentInfos))
                 o = Instance(componentInfos.First());
+
+            if (o == null)
+                throw new Exception("Could not resolve concrete type for interface: " + serviceName);
+
             return o;
         }
 
@@ -51,10 +63,10 @@ namespace CH.IoC.Infrastructure
             IList<ComponentInfo> componentInfos;
             if (_components.TryGetValue(serviceName, out componentInfos))
             {
-                var a = Array.CreateInstance(componentInfos.First().ServiceType,componentInfos.Count);
+                var a = Array.CreateInstance(componentInfos.First().ServiceType, componentInfos.Count);
                 var instances = componentInfos.Select(Instance).ToArray();
                 for (var i = 0; i < instances.Length; ++i)
-                    a.SetValue(instances[i],i);
+                    a.SetValue(instances[i], i);
                 o = a;
             }
             return o;
@@ -80,13 +92,13 @@ namespace CH.IoC.Infrastructure
                 }
             }
 
-            var parameters = 
+            var parameters =
                 componentInfo
-                .Dependencies
-                .Select(
-                    d =>d.Instance
-                )
-                .ToArray();
+                    .Dependencies
+                    .Select(
+                        d => d.Instance
+                    )
+                    .ToArray();
 
             if (componentInfo.Ctor != null)
             {
@@ -102,89 +114,38 @@ namespace CH.IoC.Infrastructure
 
         private void Setup(IEnumerable<string> assemblyPrefixes)
         {
-            var prefixesAsArray = assemblyPrefixes.ToArray();
-            foreach (var assemblyPrefix in prefixesAsArray)
-                LoadDynamicAssemblies(assemblyPrefix);
-
-            var assemblies = BuildAssemblyDictionary(prefixesAsArray);
-
-            WireByAttribute(assemblies);
-            WiredByAttribute(assemblies);
+            LoadDynamicAssemblies(assemblyPrefixes);
+            Wire(assemblyPrefixes);
         }
 
-        private void WiredByAttribute(IDictionary<string, Assembly> assemblies)
+        private void Wire(IEnumerable<string> assemblyPrefixes)
         {
-            foreach (var assembly in assemblies.Values)
-            {
-                var types = assembly.GetTypes();
-                foreach (var type in types)
-                {
-                    var attrs = type.GetCustomAttributes(typeof(Wirer), true);
-                    if (attrs.Length > 0)
-                    {
-                        var mi = type.GetMethod("Wire");
-                        if (mi != null && mi.IsStatic)
+            var seen = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase);
+            var assemblies =
+                AppDomain
+                    .CurrentDomain
+                    .GetAssemblies()
+                    .Where(
+                        a =>
+                        assemblyPrefixes
+                            .Any(
+                                assemblyPrefix =>
+                                a
+                                    .FullName
+                                    .StartsWith(assemblyPrefix)
+                            )
+                    )
+                    .Reverse() // if an assembly is loaded twice we want the one loaded later, not the earlier.
+                    .Where(a =>
                         {
-                            var name = type.FullName;
-                            var interfaceType = mi.ReturnType;
-                            if (!_components.ContainsKey(interfaceType.FullName))
-                            {
-                                _components[interfaceType.FullName] = new List<ComponentInfo>();
-                            }
-                            var componentInfos = _components[interfaceType.FullName];
-                            var componentInfo = new ComponentInfo { Name = name, Type = type, ServiceType = interfaceType };
-                            componentInfo.MCtor = mi;
-                            componentInfo.Dependencies =
-                                mi
-                                    .GetParameters()
-                                    .Select(
-                                        x =>
-                                        {
-                                            if (x.ParameterType.Name == "IEnumerable`1")
-                                            {
-                                                return new DependencyInfo
-                                                {
-                                                    Modifier = DependencyInfo.TypeModifier.Enum,
-                                                    ServiceName = x.ParameterType.GetGenericArguments().First().FullName
-                                                };
-                                            }
-                                            if (x.ParameterType.IsArray)
-                                            {
-                                                return new DependencyInfo
-                                                {
-                                                    Modifier = DependencyInfo.TypeModifier.Array,
-                                                    ServiceName = x.ParameterType.GetElementType().FullName
-                                                };
-                                            }
-                                            return new DependencyInfo
-                                            {
-                                                Modifier = DependencyInfo.TypeModifier.None,
-                                                ServiceName = x.ParameterType.FullName
-                                            };
-                                        }
-                                    ).ToArray();
+                            if (seen.Contains(a.FullName)) return false;
+                            seen.Add(a.FullName);
+                            return true;
+                        }) // remove duplicates, keeper older entries in order.
+                    .ToArray()
+                ;
 
-                            componentInfos.Add(componentInfo);
-                        }
-                    }
-                }
-            }
-        }
-
-        private static IDictionary<string, Assembly> BuildAssemblyDictionary(IEnumerable<string> assemblyPrefixes)
-        {
-            var assemblies = new Dictionary<string, Assembly>();
-            foreach (
-                var a in
-                    AppDomain.CurrentDomain.GetAssemblies()
-                             .Where(a => assemblyPrefixes.Any(assemblyPrefix => a.FullName.StartsWith(assemblyPrefix))))
-                assemblies[a.FullName] = a;
-            return assemblies;
-        }
-
-        private void WireByAttribute(IDictionary<string, Assembly> assemblies)
-        {
-            foreach (var assembly in assemblies.Values)
+            foreach (var assembly in assemblies)
             {
                 var types = assembly.GetTypes();
                 foreach (var type in types)
@@ -196,19 +157,79 @@ namespace CH.IoC.Infrastructure
                         {
                             foreach (var i in type.GetInterfaces())
                             {
-                                Register(type, i);
+                                RegisterType(type, i);
                             }
                         }
                         else
                         {
-                            Register(type, interfaceType);
+                            RegisterType(type, interfaceType);
+                        }
+                    }
+                }
+            }
+            foreach (var assembly in assemblies)
+            {
+                var types = assembly.GetTypes();
+                foreach (var type in types)
+                {
+                    var attrs = type.GetCustomAttributes(typeof (Wirer), true);
+                    if (attrs.Length > 0)
+                    {
+                        var mi = type.GetMethod("Wire");
+                        if (mi != null && mi.IsStatic)
+                        {
+                            RegisterWired(type, mi);
                         }
                     }
                 }
             }
         }
 
-        private void Register(Type type, Type interfaceType)
+        private void RegisterWired(Type type, MethodInfo mi)
+        {
+            var name = type.FullName;
+            var interfaceType = mi.ReturnType;
+            if (!_components.ContainsKey(interfaceType.FullName))
+            {
+                _components[interfaceType.FullName] = new List<ComponentInfo>();
+            }
+            var componentInfos = _components[interfaceType.FullName];
+            var componentInfo = new ComponentInfo {Name = name, Type = type, ServiceType = interfaceType};
+            componentInfo.MCtor = mi;
+            componentInfo.Dependencies =
+                mi
+                    .GetParameters()
+                    .Select(
+                        x =>
+                            {
+                                if (x.ParameterType.Name == "IEnumerable`1")
+                                {
+                                    return new DependencyInfo
+                                        {
+                                            Modifier = DependencyInfo.TypeModifier.Enum,
+                                            ServiceName = x.ParameterType.GetGenericArguments().First().FullName
+                                        };
+                                }
+                                if (x.ParameterType.IsArray)
+                                {
+                                    return new DependencyInfo
+                                        {
+                                            Modifier = DependencyInfo.TypeModifier.Array,
+                                            ServiceName = x.ParameterType.GetElementType().FullName
+                                        };
+                                }
+                                return new DependencyInfo
+                                    {
+                                        Modifier = DependencyInfo.TypeModifier.None,
+                                        ServiceName = x.ParameterType.FullName
+                                    };
+                            }
+                    ).ToArray();
+
+            componentInfos.Add(componentInfo);
+        }
+
+        private void RegisterType(Type type, Type interfaceType)
         {
             var name = type.FullName;
             if (!_components.ContainsKey(interfaceType.FullName))
@@ -270,22 +291,44 @@ namespace CH.IoC.Infrastructure
             componentInfos.Add(componentInfo);
         }
 
-        private static void LoadDynamicAssemblies(string assemblyPrefix)
+        private static void LoadDynamicAssemblies(IEnumerable<string> assemblyPrefixes)
         {
-            foreach (var dll in
-                new[]
-                    {
-                        AppDomain.CurrentDomain.BaseDirectory,
-                        Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "bin")
-                    }
-                    .Where(Directory.Exists)
-                    .SelectMany(path => Directory.EnumerateFiles(path, "*.dll", SearchOption.TopDirectoryOnly))
-                )
+            var assembliesAlreadyLoaded =
+                new HashSet<string>(
+                    AppDomain
+                        .CurrentDomain
+                        .GetAssemblies()
+                        .Select(
+                            a =>
+                            Path.GetFileNameWithoutExtension(a.Location)
+                        )
+                        .Where(
+                            n =>
+                            !string.IsNullOrWhiteSpace(n)
+                        ),
+                    StringComparer.InvariantCultureIgnoreCase
+                    )
+                ;
+
+            var dlls = new[]
+                {
+                    AppDomain.CurrentDomain.SetupInformation.ApplicationBase,
+                    Path.Combine(AppDomain.CurrentDomain.SetupInformation.ApplicationBase, "bin")
+                }
+                .Where(Directory.Exists)
+                .SelectMany(path => Directory.EnumerateFiles(path, "*.dll", SearchOption.TopDirectoryOnly))
+                .Where(d=>{
+                    var a = (Path.GetFileNameWithoutExtension(d)??string.Empty);
+                    return !assembliesAlreadyLoaded.Contains(a) && assemblyPrefixes.Any(p => a.StartsWith(p,StringComparison.InvariantCultureIgnoreCase));
+                })
+                .ToArray();
+
+            // We only load assemblies not already loaded.
+            // This can cause issues with app domain isolation!
+
+            foreach (var dll in dlls)
                 try
                 {
-                    var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(dll);
-                    if (fileNameWithoutExtension == null) continue;
-                    if (!fileNameWithoutExtension.StartsWith(assemblyPrefix)) continue;
                     Assembly.Load(new AssemblyName {CodeBase = new FileInfo(dll).FullName});
                 }
                 catch (Exception ex)
@@ -296,13 +339,13 @@ namespace CH.IoC.Infrastructure
 
         private class ComponentInfo
         {
+            public ConstructorInfo Ctor;
             public IEnumerable<DependencyInfo> Dependencies;
             public object Instance;
-            public string Name;
-            public Type @Type;
-            public ConstructorInfo Ctor;
-            public Type ServiceType;
             public MethodInfo MCtor;
+            public string Name;
+            public Type ServiceType;
+            public Type @Type;
         }
 
         private class DependencyInfo
@@ -317,11 +360,6 @@ namespace CH.IoC.Infrastructure
             public object Instance;
             public TypeModifier Modifier;
             public string ServiceName;
-        }
-
-        IEnumerable<Tuple<string, IEnumerable<string>>> IResolver.Registered()
-        {
-            return _components.Select(kvp => Tuple.Create(kvp.Key, kvp.Value.Select(c => c.Name)));
         }
     }
 }
