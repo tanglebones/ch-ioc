@@ -16,12 +16,17 @@ namespace CH.IoC.Infrastructure
 
         public Resolver(string assemblyPrefix)
         {
-            Setup(new[] {assemblyPrefix});
+            Setup(new[] {assemblyPrefix}, Enumerable.Empty<string>());
         }
 
         public Resolver(IEnumerable<string> assemblyPrefixes)
         {
-            Setup(assemblyPrefixes);
+            Setup(assemblyPrefixes, Enumerable.Empty<string>());
+        }
+
+        public Resolver(IEnumerable<string> assemblyPrefixes, IEnumerable<string> excludePrefixes)
+        {
+            Setup(assemblyPrefixes, excludePrefixes);
         }
 
         T IResolver.Resolve<T>()
@@ -110,10 +115,11 @@ namespace CH.IoC.Infrastructure
             return componentInfo.Instance;
         }
 
-        private void Setup(IEnumerable<string> assemblyPrefixes)
+        private void Setup(IEnumerable<string> includePrefixes, IEnumerable<string> excludePrefixes)
         {
-            LoadDynamicAssemblies(assemblyPrefixes);
-            Wire(assemblyPrefixes);
+            IEnumerable<string> directories = (AppDomain.CurrentDomain.SetupInformation.PrivateBinPath ?? string.Empty).Split(Path.PathSeparator).Concat(new[] { "bin" }).Select(x => Path.Combine(AppDomain.CurrentDomain.SetupInformation.ApplicationBase, x));
+            ((IResolver)this).LoadDynamicAssemblies(includePrefixes, excludePrefixes, directories);
+            Wire(includePrefixes);
         }
 
         private void Wire(IEnumerable<string> assemblyPrefixes)
@@ -268,47 +274,48 @@ namespace CH.IoC.Infrastructure
                 };
         }
 
-        private static void LoadDynamicAssemblies(IEnumerable<string> assemblyPrefixes)
+        void IResolver.LoadDynamicAssemblies(IEnumerable<string> includePrefixes, IEnumerable<string> excludePrefixes, IEnumerable<string> directories)
         {
-            var assembliesAlreadyLoaded =
-                new HashSet<string>(
-                    AppDomain
-                        .CurrentDomain
-                        .GetAssemblies()
-                        .Where(a=>!a.IsDynamic)
-                        .Select(
-                            a =>
-                            Path.GetFileNameWithoutExtension(a.Location)
-                        )
-                        .Where(
-                            n =>
-                            !string.IsNullOrWhiteSpace(n)
-                        ),
-                    StringComparer.InvariantCultureIgnoreCase
+            var seen = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase);
+            var dlls =
+                directories
+                    .Where(Directory.Exists)
+                    .SelectMany(path => Directory.EnumerateFiles(path, "*.dll", SearchOption.TopDirectoryOnly))
+                    .Where(d =>
+                        {
+                            var a = (Path.GetFileNameWithoutExtension(d) ?? string.Empty);
+                            if (!includePrefixes.Any(
+                                    p => a.StartsWith(p, StringComparison.InvariantCultureIgnoreCase)
+                                    )
+                                )
+                                return false;
+
+                            if (seen.Contains(a)) return false;
+                            seen.Add(a);
+                            if (excludePrefixes.Any(p => a.StartsWith(p, StringComparison.InvariantCultureIgnoreCase)))
+                                return false;
+
+                            return true;
+                        })
+                    .Select(
+                        d =>
+                        Tuple.Create(d, Assembly.ReflectionOnlyLoadFrom(d).GetReferencedAssemblies().Select(a=>a.Name.ToLowerInvariant()).ToArray(), Path.GetFileNameWithoutExtension(d).ToLowerInvariant())
                     )
-                ;
-
-            var dlls = new[]
-                {
-                    AppDomain.CurrentDomain.SetupInformation.ApplicationBase,
-                    Path.Combine(AppDomain.CurrentDomain.SetupInformation.ApplicationBase, "bin")
-                }
-                .Where(Directory.Exists)
-                .SelectMany(path => Directory.EnumerateFiles(path, "*.dll", SearchOption.TopDirectoryOnly))
-                .Where(d=>{
-                    var a = (Path.GetFileNameWithoutExtension(d)??string.Empty);
-                    return !assembliesAlreadyLoaded.Contains(a) && assemblyPrefixes.Any(p => a.StartsWith(p,StringComparison.InvariantCultureIgnoreCase));
-                })
-                .ToArray();
-
-            // We only load assemblies not already loaded.
-            // This can cause issues with app domain isolation!
+                    .OrderBy(t => t, new Comp<Tuple<string,string[],string>> (
+                        (a1, a2) =>
+                            {
+                                if (a1.Item2.Contains(a2.Item3)) return 1;
+                                if (a2.Item2.Contains(a1.Item3)) return - 1;
+                                return 0;
+                            }))
+                    .Select(t => t.Item1)
+                    .ToArray();
 
             LoadDlls(dlls);
         }
 
         [ExcludeFromCodeCoverage]
-        private static void LoadDlls(string[] dlls)
+        private void LoadDlls(string[] dlls)
         {
             foreach (var dll in dlls)
                 try
@@ -347,4 +354,20 @@ namespace CH.IoC.Infrastructure
             public string ServiceName;
         }
     }
+
+    internal class Comp<T> : IComparer<T>
+    {
+        private readonly Func<T, T, int> _func;
+
+        public Comp(Func<T, T, int> func)
+        {
+            _func = func;
+        }
+
+        public int Compare(T x, T y)
+        {
+            return _func(x, y);
+        }
+    }
+
 }
