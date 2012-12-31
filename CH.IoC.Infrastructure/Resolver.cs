@@ -276,6 +276,8 @@ namespace CH.IoC.Infrastructure
 
         void IResolver.LoadDynamicAssemblies(IEnumerable<string> includePrefixes, IEnumerable<string> excludePrefixes, IEnumerable<string> directories)
         {
+            var loadedLocations = new HashSet<string>(AppDomain.CurrentDomain.GetAssemblies().Select(x => new FileInfo(x.Location).FullName.ToLowerInvariant()));
+
             var seen = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase);
             var dlls =
                 directories
@@ -288,6 +290,9 @@ namespace CH.IoC.Infrastructure
                                     p => a.StartsWith(p, StringComparison.InvariantCultureIgnoreCase)
                                     )
                                 )
+                                return false;
+
+                            if (loadedLocations.Contains(new FileInfo(d).FullName.ToLowerInvariant()))
                                 return false;
 
                             if (seen.Contains(a)) return false;
