@@ -299,7 +299,7 @@ namespace CH.IoC.Infrastructure
 
         void IResolver.LoadDynamicAssemblies(IEnumerable<string> includePrefixes, IEnumerable<string> excludePrefixes, IEnumerable<string> directories)
         {
-            var loadedLocations = new HashSet<string>(AppDomain.CurrentDomain.GetAssemblies().Select(x => new FileInfo(x.Location).FullName.ToLowerInvariant()));
+            var loadedLocations = new HashSet<string>(AppDomain.CurrentDomain.GetAssemblies().Where(x=>!x.IsDynamic).Select(x => new FileInfo(x.Location).FullName.ToLowerInvariant()));
 
             var seen = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase);
             var dlls =
