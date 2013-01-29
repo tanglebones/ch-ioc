@@ -145,40 +145,63 @@ namespace CH.IoC.Infrastructure
 
             foreach (var assembly in assemblies)
             {
-                var types = assembly.GetTypes();
-                foreach (var type in types)
+                try
                 {
-                    var attrs = type.GetCustomAttributes(typeof (Wire), true);
-                    foreach (var interfaceType in from Wire attr in attrs select attr.InterfaceType)
+                    var types = assembly.GetTypes();
+                    foreach (var type in types)
                     {
-                        if (interfaceType == null)
+                        try
                         {
-                            foreach (var i in type.GetInterfaces())
+                            var attrs = type.GetCustomAttributes(typeof (Wire), true);
+                            foreach (var interfaceType in from Wire attr in attrs select attr.InterfaceType)
                             {
-                                RegisterType(type, i);
+                                if (interfaceType == null)
+                                {
+                                    foreach (var i in type.GetInterfaces())
+                                    {
+                                        RegisterType(type, i);
+                                    }
+                                }
+                                else
+                                {
+                                    RegisterType(type, interfaceType);
+                                }
                             }
                         }
-                        else
+                        catch
                         {
-                            RegisterType(type, interfaceType);
                         }
                     }
                 }
+                catch 
+                {}
             }
             foreach (var assembly in assemblies)
             {
-                var types = assembly.GetTypes();
-                foreach (var type in types)
+                try
                 {
-                    var attrs = type.GetCustomAttributes(typeof (Wirer), true);
-                    if (attrs.Length > 0)
+                    var types = assembly.GetTypes();
+                    foreach (var type in types)
                     {
-                        var mi = type.GetMethod("Wire");
-                        if (mi != null && mi.IsStatic)
+                        try
                         {
-                            RegisterWired(type, mi);
+                            var attrs = type.GetCustomAttributes(typeof (Wirer), true);
+                            if (attrs.Length > 0)
+                            {
+                                var mi = type.GetMethod("Wire");
+                                if (mi != null && mi.IsStatic)
+                                {
+                                    RegisterWired(type, mi);
+                                }
+                            }
+                        }
+                        catch
+                        {
                         }
                     }
+                }
+                catch
+                {
                 }
             }
         }
