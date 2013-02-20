@@ -10,27 +10,36 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>CH.IoC.TestHost</RootNamespace>
     <AssemblyName>CH.IoC.TestHost</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>..\CH.IoC.Test\bin\Debug\</OutputPath>
+    <OutputPath>..\deploy\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <RunCodeAnalysis>true</RunCodeAnalysis>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>..\CH.IoC.Test\bin\Release\</OutputPath>
+    <OutputPath>..\deploy\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <RunCodeAnalysis>true</RunCodeAnalysis>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup>
+    <SignAssembly>true</SignAssembly>
+  </PropertyGroup>
+  <PropertyGroup>
+    <AssemblyOriginatorKeyFile>key.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -39,6 +48,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TestHostArr.cs" />
     <Compile Include="TestHostEnum.cs" />
+    <Compile Include="TestHostEnumWirer.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\CH.IoC.Infrastructure.Wiring\CH.IoC.Infrastructure.Wiring.csproj">
@@ -49,10 +59,17 @@
       <Project>{8CDAFD9E-A07F-4975-8AE2-D7C6998999A4}</Project>
       <Name>CH.IoC.TestHost.Interface</Name>
     </ProjectReference>
+    <ProjectReference Include="..\CH.IoC.TestLog.0\CH.IoC.TestLog.0.csproj">
+      <Project>{b925c301-cad1-4ad6-bffd-50da916a4c63}</Project>
+      <Name>CH.IoC.TestLog.0</Name>
+    </ProjectReference>
     <ProjectReference Include="..\CH.IoC.TestPlugin.Interface\CH.IoC.TestPlugin.Interface.csproj">
       <Project>{5734DD65-9D18-4F4F-B4CB-98D68C0BB2D3}</Project>
       <Name>CH.IoC.TestPlugin.Interface</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="key.snk" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

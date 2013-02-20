@@ -1,9 +1,7 @@
-
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2010
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CH.IoC.Infrastructure.Wiring", "CH.IoC.Infrastructure.Wiring\CH.IoC.Infrastructure.Wiring.csproj", "{3202B87E-3586-4A48-ABFE-406404B7C28D}"
 EndProject
-
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CH.IoC.Infrastructure", "CH.IoC.Infrastructure\CH.IoC.Infrastructure.csproj", "{9DAD3974-B3F2-4F49-BFF2-43234AD4DBA8}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{C416E7C7-9FFF-43E4-A74D-1DBD2CD52916}"
@@ -27,6 +25,22 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	ProjectSection(SolutionItems) = preProject
 		README.md = README.md
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CH.IoC.TestBoot", "CH.IoC.TestBoot\CH.IoC.TestBoot.csproj", "{C7541094-15B9-4A07-B3D5-46EE61AACF62}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CH.IoC.TestSrv.Interface", "CH.IoC.TestSrv.Interface\CH.IoC.TestSrv.Interface.csproj", "{455F3664-E5D4-4C94-B486-F35DFE2F909A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CH.IoC.TestIsolated.0", "CH.IoC.TestIsolated.0\CH.IoC.TestIsolated.0.csproj", "{C4DF7899-5E35-4F48-BAA3-88303EAD03CF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CH.IoC.TestIsolated.1", "CH.IoC.TestIsolated.1\CH.IoC.TestIsolated.1.csproj", "{C4DF7899-5E35-4F48-BAA3-88313EAD03CF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CH.IoC.TestIsolated.2", "CH.IoC.TestIsolated.2\CH.IoC.TestIsolated.2.csproj", "{C4DF7899-5E35-4F48-BAA3-88323EAD03CF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CH.IoC.TestLog.0", "CH.IoC.TestLog.0\CH.IoC.TestLog.0.csproj", "{B925C301-CAD1-4AD6-BFFD-50DA916A4C63}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CH.IoC.TestLog.1", "CH.IoC.TestLog.1\CH.IoC.TestLog.1.csproj", "{B925C311-CAD1-4AD6-BFFD-50DA916A4C63}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CH.IoC.TestLog.2", "CH.IoC.TestLog.2\CH.IoC.TestLog.2.csproj", "{B925C321-CAD1-4AD6-BFFD-50DA916A4C63}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -62,6 +76,38 @@ Global
 		{8CDAFD9E-A07F-4975-8AE2-D7C6998999A4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8CDAFD9E-A07F-4975-8AE2-D7C6998999A4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8CDAFD9E-A07F-4975-8AE2-D7C6998999A4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C7541094-15B9-4A07-B3D5-46EE61AACF62}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C7541094-15B9-4A07-B3D5-46EE61AACF62}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C7541094-15B9-4A07-B3D5-46EE61AACF62}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C7541094-15B9-4A07-B3D5-46EE61AACF62}.Release|Any CPU.Build.0 = Release|Any CPU
+		{455F3664-E5D4-4C94-B486-F35DFE2F909A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{455F3664-E5D4-4C94-B486-F35DFE2F909A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{455F3664-E5D4-4C94-B486-F35DFE2F909A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{455F3664-E5D4-4C94-B486-F35DFE2F909A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C4DF7899-5E35-4F48-BAA3-88303EAD03CF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C4DF7899-5E35-4F48-BAA3-88303EAD03CF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C4DF7899-5E35-4F48-BAA3-88303EAD03CF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C4DF7899-5E35-4F48-BAA3-88303EAD03CF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C4DF7899-5E35-4F48-BAA3-88313EAD03CF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C4DF7899-5E35-4F48-BAA3-88313EAD03CF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C4DF7899-5E35-4F48-BAA3-88313EAD03CF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C4DF7899-5E35-4F48-BAA3-88313EAD03CF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C4DF7899-5E35-4F48-BAA3-88323EAD03CF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C4DF7899-5E35-4F48-BAA3-88323EAD03CF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C4DF7899-5E35-4F48-BAA3-88323EAD03CF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C4DF7899-5E35-4F48-BAA3-88323EAD03CF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B925C301-CAD1-4AD6-BFFD-50DA916A4C63}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B925C301-CAD1-4AD6-BFFD-50DA916A4C63}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B925C301-CAD1-4AD6-BFFD-50DA916A4C63}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B925C301-CAD1-4AD6-BFFD-50DA916A4C63}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B925C311-CAD1-4AD6-BFFD-50DA916A4C63}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B925C311-CAD1-4AD6-BFFD-50DA916A4C63}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B925C311-CAD1-4AD6-BFFD-50DA916A4C63}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B925C311-CAD1-4AD6-BFFD-50DA916A4C63}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B925C321-CAD1-4AD6-BFFD-50DA916A4C63}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B925C321-CAD1-4AD6-BFFD-50DA916A4C63}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B925C321-CAD1-4AD6-BFFD-50DA916A4C63}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B925C321-CAD1-4AD6-BFFD-50DA916A4C63}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

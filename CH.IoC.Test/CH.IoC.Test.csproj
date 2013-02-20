@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -10,10 +10,11 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>CH.IoC.Test</RootNamespace>
     <AssemblyName>CH.IoC.Test</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
     <RestorePackages>true</RestorePackages>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -24,6 +25,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <RunCodeAnalysis>true</RunCodeAnalysis>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -33,6 +35,13 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <RunCodeAnalysis>true</RunCodeAnalysis>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup>
+    <SignAssembly>true</SignAssembly>
+  </PropertyGroup>
+  <PropertyGroup>
+    <AssemblyOriginatorKeyFile>key.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="nunit.framework">
@@ -46,6 +55,7 @@
     <Compile Include="TestFixture.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="key.snk" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
@@ -57,9 +67,17 @@
       <Project>{8CDAFD9E-A07F-4975-8AE2-D7C6998999A4}</Project>
       <Name>CH.IoC.TestHost.Interface</Name>
     </ProjectReference>
+    <ProjectReference Include="..\CH.IoC.TestLog.0\CH.IoC.TestLog.0.csproj">
+      <Project>{B925C301-CAD1-4AD6-BFFD-50DA916A4C63}</Project>
+      <Name>CH.IoC.TestLog.0</Name>
+    </ProjectReference>
     <ProjectReference Include="..\CH.IoC.TestPlugin.Interface\CH.IoC.TestPlugin.Interface.csproj">
       <Project>{5734DD65-9D18-4F4F-B4CB-98D68C0BB2D3}</Project>
       <Name>CH.IoC.TestPlugin.Interface</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\CH.IoC.TestSrv.Interface\CH.IoC.TestSrv.Interface.csproj">
+      <Project>{455F3664-E5D4-4C94-B486-F35DFE2F909A}</Project>
+      <Name>CH.IoC.TestSrv.Interface</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
