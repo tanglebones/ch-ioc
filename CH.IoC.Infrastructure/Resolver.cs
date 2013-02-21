@@ -154,17 +154,18 @@ namespace CH.IoC.Infrastructure
                             foreach (var attr in attrs)
                             {
                                 var pi = attr.GetType().GetProperty("InterfaceType");
-                                var interfaceType = pi.GetValue(attr,null) as Type;
-                                if (interfaceType == null)
+                                if (pi != null)
                                 {
-                                    foreach (var i in type.GetInterfaces())
+                                    var interfaceType = pi.GetValue(attr, null) as Type;
+                                    if (interfaceType != null)
                                     {
-                                        RegisterType(type, i);
+                                        RegisterType(type, interfaceType);
+                                        continue;
                                     }
                                 }
-                                else
+                                foreach (var i in type.GetInterfaces())
                                 {
-                                    RegisterType(type, interfaceType);
+                                    RegisterType(type, i);
                                 }
                             }
                         }
