@@ -23,6 +23,25 @@ namespace CH.IoC.Infrastructure
             Setup();
         }
 
+        public Resolver(IEnumerable<string> assemblyPrefixes, IEnumerable<object> overrides)
+        {
+            _assemblyPrefixes = assemblyPrefixes.ToArray();
+            SetupOverrides(overrides);
+            Setup();
+        }
+
+        private void SetupOverrides(IEnumerable<object> overrides)
+        {
+            foreach (var instance in overrides)
+            {
+                var type = instance.GetType();
+                foreach (var i in type.GetInterfaces())
+                {
+                    RegisterType(type, i, instance);
+                }
+            }
+        }
+
         T IResolver.Resolve<T>()
         {
             var serviceName = typeof(T).AssemblyQualifiedName;
@@ -240,7 +259,7 @@ namespace CH.IoC.Infrastructure
             componentInfos.Add(componentInfo);
         }
 
-        private void RegisterType(Type type, Type interfaceType)
+        private void RegisterType(Type type, Type interfaceType, object instance=null)
         {
             var name = type.AssemblyQualifiedName;
             if (!_components.ContainsKey(interfaceType.AssemblyQualifiedName))
@@ -250,7 +269,7 @@ namespace CH.IoC.Infrastructure
             var componentInfos = _components[interfaceType.AssemblyQualifiedName];
             if (componentInfos.Any(x => x.ServiceType == interfaceType && x.Type == type))
                 return;
-            var componentInfo = new ComponentInfo {Name = name, Type = type, ServiceType = interfaceType};
+            var componentInfo = new ComponentInfo {Name = name, Type = type, ServiceType = interfaceType, Instance = instance};
             var ctor =
                 type
                     .GetConstructors()
