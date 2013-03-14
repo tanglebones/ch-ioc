@@ -6,6 +6,4 @@ namespace CH.IoC.TestHost.Interface
     {
         IEnumerable<string> Run(string toWhat);
     }
-    public interface ITestHostArr : ITestHost { }
-    public interface ITestHostEnum : ITestHost { }
 }

@@ -3,6 +3,7 @@
 *.user
 *.suo
 *.nupkg
+deploy
 _ReSharper.*
 _dotCover.*
 bin/

@@ -9,9 +9,6 @@ namespace CH.IoC.Infrastructure
         T[] ResolveAll<T>() where T : class;
         IEnumerable<Tuple<string, IEnumerable<string>>> Registered();
 
-        void LoadDynamicAssemblies(
-            IEnumerable<string> includePrefixes,
-            IEnumerable<string> excludePrefixes,
-            IEnumerable<string> directories);
+        void LoadDynamicAssemblies(IEnumerable<string> directories);
     }
 }

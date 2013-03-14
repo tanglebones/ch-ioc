@@ -18,18 +18,4 @@ namespace CH.IoC.TestPlugin
             return _onePrefix.Prefix + ": " + toThis;
         }
     }
-
-    internal interface IOnePrefix
-    {
-        string Prefix { get; }
-    }
-
-    [Wire]
-    sealed class OnePrefix :IOnePrefix
-    {
-        string IOnePrefix.Prefix
-        {
-            get { return "ONE";  }
-        }
-    }
 }
