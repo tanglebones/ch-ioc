@@ -5,7 +5,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using CH.IoC.Infrastructure.Wiring;
 
 namespace CH.IoC.Infrastructure
 {
@@ -14,24 +13,38 @@ namespace CH.IoC.Infrastructure
         private readonly IDictionary<string, IList<ComponentInfo>> _components =
             new Dictionary<string, IList<ComponentInfo>>();
 
-        public Resolver(string assemblyPrefix)
-        {
-            Setup(new[] {assemblyPrefix}, Enumerable.Empty<string>());
-        }
+        private readonly string[] _assemblyPrefixes;
+        private readonly HashSet<string> _seen = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase);
+        private readonly HashSet<string> _loaded = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase); 
 
         public Resolver(IEnumerable<string> assemblyPrefixes)
         {
-            Setup(assemblyPrefixes, Enumerable.Empty<string>());
+            _assemblyPrefixes = assemblyPrefixes.ToArray();
+            Setup();
         }
 
-        public Resolver(IEnumerable<string> assemblyPrefixes, IEnumerable<string> excludePrefixes)
+        public Resolver(IEnumerable<string> assemblyPrefixes, IEnumerable<object> overrides)
         {
-            Setup(assemblyPrefixes, excludePrefixes);
+            _assemblyPrefixes = assemblyPrefixes.ToArray();
+            SetupOverrides(overrides);
+            Setup();
+        }
+
+        private void SetupOverrides(IEnumerable<object> overrides)
+        {
+            foreach (var instance in overrides)
+            {
+                var type = instance.GetType();
+                foreach (var i in type.GetInterfaces())
+                {
+                    RegisterType(type, i, instance);
+                }
+            }
         }
 
         T IResolver.Resolve<T>()
         {
-            var serviceName = typeof (T).FullName;
+            var serviceName = typeof(T).AssemblyQualifiedName;
             var o = Resolve(serviceName);
 
             return (T) o;
@@ -39,7 +52,7 @@ namespace CH.IoC.Infrastructure
 
         T[] IResolver.ResolveAll<T>()
         {
-            var o = ResolveAll(typeof (T).FullName);
+            var o = ResolveAll(typeof(T).AssemblyQualifiedName);
             if (o == null)
                 return new T[] {};
             return ((object[]) o).Cast<T>().ToArray();
@@ -115,23 +128,27 @@ namespace CH.IoC.Infrastructure
             return componentInfo.Instance;
         }
 
-        private void Setup(IEnumerable<string> includePrefixes, IEnumerable<string> excludePrefixes)
+        private void Setup()
         {
-            IEnumerable<string> directories = (AppDomain.CurrentDomain.SetupInformation.PrivateBinPath ?? string.Empty).Split(Path.PathSeparator).Concat(new[] { "bin" }).Select(x => Path.Combine(AppDomain.CurrentDomain.SetupInformation.ApplicationBase, x));
-            ((IResolver)this).LoadDynamicAssemblies(includePrefixes, excludePrefixes, directories);
-            Wire(includePrefixes);
+            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                _loaded.Add(assembly.FullName);
+            }
+
+            var directories = (AppDomain.CurrentDomain.SetupInformation.PrivateBinPath ?? string.Empty).Split(Path.PathSeparator).Concat(new[] { "bin" }).Select(x => Path.Combine(AppDomain.CurrentDomain.SetupInformation.ApplicationBase, x));
+            ((IResolver)this).LoadDynamicAssemblies(directories);
+            Wire();
         }
 
-        private void Wire(IEnumerable<string> assemblyPrefixes)
+        private void Wire()
         {
-            var seen = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase);
             var assemblies =
                 AppDomain
                     .CurrentDomain
                     .GetAssemblies()
                     .Where(
                         a =>
-                        assemblyPrefixes
+                        _assemblyPrefixes
                             .Any(
                                 assemblyPrefix =>
                                 a
@@ -139,46 +156,71 @@ namespace CH.IoC.Infrastructure
                                     .StartsWith(assemblyPrefix)
                             )
                     )
-                    .Where(a => NotAlreadySeen(seen, a)) // remove duplicates, keeper older entries in order.
+                    .Where(a => NotAlreadySeen(_seen, a)) // remove duplicates, keeper older entries in order.
                     .ToArray()
                 ;
 
             foreach (var assembly in assemblies)
             {
-                var types = assembly.GetTypes();
-                foreach (var type in types)
+                try
                 {
-                    var attrs = type.GetCustomAttributes(typeof (Wire), true);
-                    foreach (var interfaceType in from Wire attr in attrs select attr.InterfaceType)
+                    var types = assembly.GetTypes();
+                    foreach (var type in types)
                     {
-                        if (interfaceType == null)
+                        try
                         {
-                            foreach (var i in type.GetInterfaces())
+                            var attrs = type.GetCustomAttributes(true).Where(x=>x.GetType().Name == "Wire").ToArray();
+                            foreach (var attr in attrs)
                             {
-                                RegisterType(type, i);
+                                var pi = attr.GetType().GetProperty("InterfaceType");
+                                if (pi != null)
+                                {
+                                    var interfaceType = pi.GetValue(attr, null) as Type;
+                                    if (interfaceType != null)
+                                    {
+                                        RegisterType(type, interfaceType);
+                                        continue;
+                                    }
+                                }
+                                foreach (var i in type.GetInterfaces())
+                                {
+                                    RegisterType(type, i);
+                                }
                             }
                         }
-                        else
+                        catch
                         {
-                            RegisterType(type, interfaceType);
                         }
                     }
                 }
+                catch 
+                {}
             }
             foreach (var assembly in assemblies)
             {
-                var types = assembly.GetTypes();
-                foreach (var type in types)
+                try
                 {
-                    var attrs = type.GetCustomAttributes(typeof (Wirer), true);
-                    if (attrs.Length > 0)
+                    var types = assembly.GetTypes();
+                    foreach (var type in types)
                     {
-                        var mi = type.GetMethod("Wire");
-                        if (mi != null && mi.IsStatic)
+                        try
                         {
-                            RegisterWired(type, mi);
+                            var attrs = type.GetCustomAttributes(true).Where(x => x.GetType().Name == "Wirer").ToArray();
+                            if (attrs.Length <= 0) continue;
+
+                            var mi = type.GetMethod("Wire");
+                            if (mi != null && mi.IsStatic)
+                            {
+                                RegisterWired(type, mi);
+                            }
+                        }
+                        catch
+                        {
                         }
                     }
+                }
+                catch
+                {
                 }
             }
         }
@@ -193,33 +235,41 @@ namespace CH.IoC.Infrastructure
 
         private void RegisterWired(Type type, MethodInfo mi)
         {
-            var name = type.FullName;
+            var name = type.AssemblyQualifiedName;
             var interfaceType = mi.ReturnType;
-            if (!_components.ContainsKey(interfaceType.FullName))
+            if (!_components.ContainsKey(interfaceType.AssemblyQualifiedName))
             {
-                _components[interfaceType.FullName] = new List<ComponentInfo>();
+                _components[interfaceType.AssemblyQualifiedName] = new List<ComponentInfo>();
             }
-            var componentInfos = _components[interfaceType.FullName];
-            var componentInfo = new ComponentInfo {Name = name, Type = type, ServiceType = interfaceType};
-            componentInfo.MCtor = mi;
-            componentInfo.Dependencies =
-                mi
-                    .GetParameters()
-                    .Select(DependencyInfoFromParameterInfo)
-                    .ToArray();
+            var componentInfos = _components[interfaceType.AssemblyQualifiedName];
+            if (componentInfos.Any(x => x.MCtor == mi && x.Type == type)) 
+                return;
+            var componentInfo = new ComponentInfo
+                {
+                    Name = name,
+                    Type = type,
+                    ServiceType = interfaceType,
+                    MCtor = mi,
+                    Dependencies = mi
+                        .GetParameters()
+                        .Select(DependencyInfoFromParameterInfo)
+                        .ToArray()
+                };
 
             componentInfos.Add(componentInfo);
         }
 
-        private void RegisterType(Type type, Type interfaceType)
+        private void RegisterType(Type type, Type interfaceType, object instance=null)
         {
-            var name = type.FullName;
-            if (!_components.ContainsKey(interfaceType.FullName))
+            var name = type.AssemblyQualifiedName;
+            if (!_components.ContainsKey(interfaceType.AssemblyQualifiedName))
             {
-                _components[interfaceType.FullName] = new List<ComponentInfo>();
+                _components[interfaceType.AssemblyQualifiedName] = new List<ComponentInfo>();
             }
-            var componentInfos = _components[interfaceType.FullName];
-            var componentInfo = new ComponentInfo {Name = name, Type = type, ServiceType = interfaceType};
+            var componentInfos = _components[interfaceType.AssemblyQualifiedName];
+            if (componentInfos.Any(x => x.ServiceType == interfaceType && x.Type == type))
+                return;
+            var componentInfo = new ComponentInfo {Name = name, Type = type, ServiceType = interfaceType, Instance = instance};
             var ctor =
                 type
                     .GetConstructors()
@@ -256,7 +306,7 @@ namespace CH.IoC.Infrastructure
                 return new DependencyInfo
                     {
                         Modifier = DependencyInfo.TypeModifier.Enum,
-                        ServiceName = x.ParameterType.GetGenericArguments().First().FullName
+                        ServiceName = x.ParameterType.GetGenericArguments().First().AssemblyQualifiedName
                     };
             }
             if (x.ParameterType.IsArray)
@@ -264,19 +314,18 @@ namespace CH.IoC.Infrastructure
                 return new DependencyInfo
                     {
                         Modifier = DependencyInfo.TypeModifier.Array,
-                        ServiceName = x.ParameterType.GetElementType().FullName
+                        ServiceName = x.ParameterType.GetElementType().AssemblyQualifiedName
                     };
             }
             return new DependencyInfo
                 {
                     Modifier = DependencyInfo.TypeModifier.None,
-                    ServiceName = x.ParameterType.FullName
+                    ServiceName = x.ParameterType.AssemblyQualifiedName
                 };
         }
 
-        void IResolver.LoadDynamicAssemblies(IEnumerable<string> includePrefixes, IEnumerable<string> excludePrefixes, IEnumerable<string> directories)
+        void IResolver.LoadDynamicAssemblies(IEnumerable<string> directories)
         {
-            var seen = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase);
             var dlls =
                 directories
                     .Where(Directory.Exists)
@@ -284,48 +333,40 @@ namespace CH.IoC.Infrastructure
                     .Where(d =>
                         {
                             var a = (Path.GetFileNameWithoutExtension(d) ?? string.Empty);
-                            if (!includePrefixes.Any(
-                                    p => a.StartsWith(p, StringComparison.InvariantCultureIgnoreCase)
-                                    )
-                                )
-                                return false;
-
-                            if (seen.Contains(a)) return false;
-                            seen.Add(a);
-                            if (excludePrefixes.Any(p => a.StartsWith(p, StringComparison.InvariantCultureIgnoreCase)))
-                                return false;
-
-                            return true;
+                            return _assemblyPrefixes.Any(
+                                p => a.StartsWith(p, StringComparison.InvariantCultureIgnoreCase)
+                                );
                         })
-                    .Select(
-                        d =>
-                        Tuple.Create(d, Assembly.ReflectionOnlyLoadFrom(d).GetReferencedAssemblies().Select(a=>a.Name.ToLowerInvariant()).ToArray(), Path.GetFileNameWithoutExtension(d).ToLowerInvariant())
-                    )
-                    .OrderBy(t => t, new Comp<Tuple<string,string[],string>> (
-                        (a1, a2) =>
-                            {
-                                if (a1.Item2.Contains(a2.Item3)) return 1;
-                                if (a2.Item2.Contains(a1.Item3)) return - 1;
-                                return 0;
-                            }))
-                    .Select(t => t.Item1)
-                    .ToArray();
+                    ;
 
             LoadDlls(dlls);
+            Wire();
         }
 
         [ExcludeFromCodeCoverage]
-        private void LoadDlls(string[] dlls)
+        private void LoadDlls(IEnumerable<string> dlls)
         {
             foreach (var dll in dlls)
                 try
                 {
-                    Assembly.Load(new AssemblyName {CodeBase = new FileInfo(dll).FullName});
+                    var fullpath = new FileInfo(dll).FullName;
+                    Assembly ra;
+                    try
+                    {
+                        ra = Assembly.ReflectionOnlyLoadFrom(fullpath);
+                    }
+                    catch
+                    {
+                        continue;
+                    }
+                    if (_loaded.Contains(ra.FullName)) continue;
+
+                    var a = Assembly.Load(ra.GetName());
+                    _loaded.Add(a.FullName);
                 }
                 catch (Exception ex)
                 {
                     Debug.WriteLine("could not load assembly \"" + dll + "\": " + ex);
-                    throw;
                 }
         }
 
@@ -354,20 +395,4 @@ namespace CH.IoC.Infrastructure
             public string ServiceName;
         }
     }
-
-    internal class Comp<T> : IComparer<T>
-    {
-        private readonly Func<T, T, int> _func;
-
-        public Comp(Func<T, T, int> func)
-        {
-            _func = func;
-        }
-
-        public int Compare(T x, T y)
-        {
-            return _func(x, y);
-        }
-    }
-
 }
