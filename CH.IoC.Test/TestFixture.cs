@@ -29,7 +29,7 @@ namespace CH.IoC.Test
         [Test]
         public void TestArray()
         {
-            IResolver resolver = new Resolver(new []{"CH.IoC."});
+            IResolver resolver = new Resolver(new []{"CH.IoC."}).OnWireException(ex=>System.Diagnostics.Debug.WriteLine(ex.ToString()));
             resolver.LoadDynamicAssemblies(new[]{Environment.CurrentDirectory});
             var testHost = resolver.Resolve<ITestHostArr>();
             var results = testHost.Run("test").ToArray();

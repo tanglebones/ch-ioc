@@ -15,7 +15,8 @@ namespace CH.IoC.Infrastructure
 
         private readonly string[] _assemblyPrefixes;
         private readonly HashSet<string> _seen = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase);
-        private readonly HashSet<string> _loaded = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase); 
+        private readonly HashSet<string> _loaded = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase);
+        private Action<Exception> _wireExceptionAction;
 
         public Resolver(IEnumerable<string> assemblyPrefixes)
         {
@@ -28,6 +29,12 @@ namespace CH.IoC.Infrastructure
             _assemblyPrefixes = assemblyPrefixes.ToArray();
             SetupOverrides(overrides);
             Setup();
+        }
+
+        public Resolver OnWireException(Action<Exception> action)
+        {
+            _wireExceptionAction = action;
+            return this;
         }
 
         private void SetupOverrides(IEnumerable<object> overrides)
@@ -68,7 +75,7 @@ namespace CH.IoC.Infrastructure
             object o = null;
             IList<ComponentInfo> componentInfos;
             if (_components.TryGetValue(serviceName, out componentInfos))
-                o = Instance(componentInfos.First());
+                o = Instance(componentInfos.FirstOrDefault());
 
             if (o == null)
                 throw new Exception("Could not resolve concrete type for interface: " + serviceName);
@@ -169,7 +176,7 @@ namespace CH.IoC.Infrastructure
                     {
                         try
                         {
-                            var attrs = type.GetCustomAttributes(true).Where(x=>x.GetType().Name == "Wire").ToArray();
+                            var attrs = type.GetCustomAttributes(true).Where(x => x.GetType().Name == "Wire").ToArray();
                             foreach (var attr in attrs)
                             {
                                 var pi = attr.GetType().GetProperty("InterfaceType");
@@ -188,13 +195,16 @@ namespace CH.IoC.Infrastructure
                                 }
                             }
                         }
-                        catch
+                        catch (Exception ex)
                         {
+                            _wireExceptionAction(ex);
                         }
                     }
                 }
-                catch 
-                {}
+                catch (Exception ex)
+                {
+                    _wireExceptionAction(ex);
+                }
             }
             foreach (var assembly in assemblies)
             {
@@ -214,13 +224,15 @@ namespace CH.IoC.Infrastructure
                                 RegisterWired(type, mi);
                             }
                         }
-                        catch
+                        catch (Exception ex)
                         {
+                            _wireExceptionAction(ex);
                         }
                     }
                 }
-                catch
+                catch (Exception ex)
                 {
+                    _wireExceptionAction(ex);
                 }
             }
         }

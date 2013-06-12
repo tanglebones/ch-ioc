@@ -8,7 +8,6 @@ namespace CH.IoC.Infrastructure
         T Resolve<T>() where T:class;
         T[] ResolveAll<T>() where T : class;
         IEnumerable<Tuple<string, IEnumerable<string>>> Registered();
-
         void LoadDynamicAssemblies(IEnumerable<string> directories);
     }
 }
