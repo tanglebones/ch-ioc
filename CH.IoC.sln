@@ -42,6 +42,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CH.IoC.TestLog.1", "CH.IoC.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CH.IoC.TestLog.2", "CH.IoC.TestLog.2\CH.IoC.TestLog.2.csproj", "{B925C321-CAD1-4AD6-BFFD-50DA916A4C63}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CH.IoC.Fake", "CH.IoC.Fake\CH.IoC.Fake.csproj", "{6EDAA682-919D-4DCB-921D-9A11375E9091}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -108,6 +110,10 @@ Global
 		{B925C321-CAD1-4AD6-BFFD-50DA916A4C63}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B925C321-CAD1-4AD6-BFFD-50DA916A4C63}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B925C321-CAD1-4AD6-BFFD-50DA916A4C63}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6EDAA682-919D-4DCB-921D-9A11375E9091}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6EDAA682-919D-4DCB-921D-9A11375E9091}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6EDAA682-919D-4DCB-921D-9A11375E9091}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6EDAA682-919D-4DCB-921D-9A11375E9091}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
