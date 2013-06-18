@@ -10,12 +10,13 @@ namespace CH.IoC.Infrastructure
 {
     public sealed class Resolver : IResolver
     {
+        private readonly string[] _assemblyPrefixes;
+
         private readonly IDictionary<string, IList<ComponentInfo>> _components =
             new Dictionary<string, IList<ComponentInfo>>();
 
-        private readonly string[] _assemblyPrefixes;
-        private readonly HashSet<string> _seen = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase);
         private readonly HashSet<string> _loaded = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase);
+        private readonly HashSet<string> _seen = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase);
         private Action<Exception> _wireExceptionAction;
 
         public Resolver(IEnumerable<string> assemblyPrefixes)
@@ -29,6 +30,46 @@ namespace CH.IoC.Infrastructure
             _assemblyPrefixes = assemblyPrefixes.ToArray();
             SetupOverrides(overrides);
             Setup();
+        }
+
+        T IResolver.Resolve<T>()
+        {
+            var serviceName = typeof (T).AssemblyQualifiedName;
+            var o = Resolve(serviceName);
+
+            return (T) o;
+        }
+
+        T[] IResolver.ResolveAll<T>()
+        {
+            var o = ResolveAll(typeof (T).AssemblyQualifiedName);
+            if (o == null)
+                return new T[] {};
+            return ((object[]) o).Cast<T>().ToArray();
+        }
+
+        IEnumerable<Tuple<string, IEnumerable<string>>> IResolver.Registered()
+        {
+            return _components.Select(kvp => Tuple.Create(kvp.Key, kvp.Value.Select(c => c.Name)));
+        }
+
+        void IResolver.LoadDynamicAssemblies(IEnumerable<string> directories)
+        {
+            var dlls =
+                directories
+                    .Where(Directory.Exists)
+                    .SelectMany(path => Directory.EnumerateFiles(path, "*.dll", SearchOption.TopDirectoryOnly))
+                    .Where(d =>
+                        {
+                            var a = (Path.GetFileNameWithoutExtension(d) ?? string.Empty);
+                            return _assemblyPrefixes.Any(
+                                p => a.StartsWith(p, StringComparison.InvariantCultureIgnoreCase)
+                                );
+                        })
+                ;
+
+            LoadDlls(dlls);
+            Wire();
         }
 
         public Resolver OnWireException(Action<Exception> action)
@@ -47,27 +88,6 @@ namespace CH.IoC.Infrastructure
                     RegisterType(type, i, instance);
                 }
             }
-        }
-
-        T IResolver.Resolve<T>()
-        {
-            var serviceName = typeof(T).AssemblyQualifiedName;
-            var o = Resolve(serviceName);
-
-            return (T) o;
-        }
-
-        T[] IResolver.ResolveAll<T>()
-        {
-            var o = ResolveAll(typeof(T).AssemblyQualifiedName);
-            if (o == null)
-                return new T[] {};
-            return ((object[]) o).Cast<T>().ToArray();
-        }
-
-        IEnumerable<Tuple<string, IEnumerable<string>>> IResolver.Registered()
-        {
-            return _components.Select(kvp => Tuple.Create(kvp.Key, kvp.Value.Select(c => c.Name)));
         }
 
         private object Resolve(string serviceName)
@@ -142,8 +162,17 @@ namespace CH.IoC.Infrastructure
                 _loaded.Add(assembly.FullName);
             }
 
-            var directories = (AppDomain.CurrentDomain.SetupInformation.PrivateBinPath ?? string.Empty).Split(Path.PathSeparator).Concat(new[] { "bin" }).Select(x => Path.Combine(AppDomain.CurrentDomain.SetupInformation.ApplicationBase, x));
-            ((IResolver)this).LoadDynamicAssemblies(directories);
+            var directories =
+                (AppDomain.CurrentDomain.SetupInformation.PrivateBinPath ?? string.Empty).Split(Path.PathSeparator)
+                                                                                         .Concat(new[] {"bin"})
+                                                                                         .Select(
+                                                                                             x =>
+                                                                                             Path.Combine(
+                                                                                                 AppDomain.CurrentDomain
+                                                                                                          .SetupInformation
+                                                                                                          .ApplicationBase,
+                                                                                                 x));
+            ((IResolver) this).LoadDynamicAssemblies(directories);
             Wire();
         }
 
@@ -254,7 +283,7 @@ namespace CH.IoC.Infrastructure
                 _components[interfaceType.AssemblyQualifiedName] = new List<ComponentInfo>();
             }
             var componentInfos = _components[interfaceType.AssemblyQualifiedName];
-            if (componentInfos.Any(x => x.MCtor == mi && x.Type == type)) 
+            if (componentInfos.Any(x => x.MCtor == mi && x.Type == type))
                 return;
             var componentInfo = new ComponentInfo
                 {
@@ -271,7 +300,7 @@ namespace CH.IoC.Infrastructure
             componentInfos.Add(componentInfo);
         }
 
-        private void RegisterType(Type type, Type interfaceType, object instance=null)
+        private void RegisterType(Type type, Type interfaceType, object instance = null)
         {
             var name = type.AssemblyQualifiedName;
             if (!_components.ContainsKey(interfaceType.AssemblyQualifiedName))
@@ -281,32 +310,39 @@ namespace CH.IoC.Infrastructure
             var componentInfos = _components[interfaceType.AssemblyQualifiedName];
             if (componentInfos.Any(x => x.ServiceType == interfaceType && x.Type == type))
                 return;
-            var componentInfo = new ComponentInfo {Name = name, Type = type, ServiceType = interfaceType, Instance = instance};
-            var ctor =
-                type
-                    .GetConstructors()
-                    .Where(
-                        x => x
-                                 .GetParameters()
-                                 .All(
-                                     p =>
-                                         {
-                                             var pi = p.ParameterType;
-                                             return pi.IsInterface ||
-                                                    (pi.IsArray &&
-                                                     pi.GetElementType()
-                                                       .IsInterface);
-                                         }
-                                 )
-                    )
-                    .OrderByDescending(x => x.GetParameters().Length)
-                    .First();
+            var componentInfo = new ComponentInfo
+                {
+                    Name = name,
+                    Type = type,
+                    ServiceType = interfaceType,
+                    Instance = instance
+                };
+            var ctor = type
+                .GetConstructors()
+                .Where(
+                    x => x
+                             .GetParameters()
+                             .All(
+                                 p =>
+                                     {
+                                         var pi = p.ParameterType;
+                                         return pi.IsInterface ||
+                                                (pi.IsArray &&
+                                                 pi.GetElementType()
+                                                   .IsInterface);
+                                     }
+                             )
+                )
+                .OrderByDescending(x => x.GetParameters().Length)
+                .FirstOrDefault();
+
             componentInfo.Ctor = ctor;
-            componentInfo.Dependencies =
-                ctor
-                    .GetParameters()
-                    .Select(DependencyInfoFromParameterInfo)
-                    .ToArray();
+            if (ctor != null)
+                componentInfo.Dependencies =
+                    ctor
+                        .GetParameters()
+                        .Select(DependencyInfoFromParameterInfo)
+                        .ToArray();
 
             componentInfos.Add(componentInfo);
         }
@@ -334,25 +370,6 @@ namespace CH.IoC.Infrastructure
                     Modifier = DependencyInfo.TypeModifier.None,
                     ServiceName = x.ParameterType.AssemblyQualifiedName
                 };
-        }
-
-        void IResolver.LoadDynamicAssemblies(IEnumerable<string> directories)
-        {
-            var dlls =
-                directories
-                    .Where(Directory.Exists)
-                    .SelectMany(path => Directory.EnumerateFiles(path, "*.dll", SearchOption.TopDirectoryOnly))
-                    .Where(d =>
-                        {
-                            var a = (Path.GetFileNameWithoutExtension(d) ?? string.Empty);
-                            return _assemblyPrefixes.Any(
-                                p => a.StartsWith(p, StringComparison.InvariantCultureIgnoreCase)
-                                );
-                        })
-                    ;
-
-            LoadDlls(dlls);
-            Wire();
         }
 
         [ExcludeFromCodeCoverage]
