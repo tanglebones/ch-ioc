@@ -18,22 +18,22 @@ namespace CH.IoC.Infrastructure
         private readonly HashSet<string> _loaded = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase);
         private readonly HashSet<string> _seen = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase);
         private Action<Exception> _wireExceptionAction;
+        private bool _setup;
 
         public Resolver(IEnumerable<string> assemblyPrefixes)
         {
             _assemblyPrefixes = assemblyPrefixes.ToArray();
-            Setup();
         }
 
         public Resolver(IEnumerable<string> assemblyPrefixes, IEnumerable<object> overrides)
         {
             _assemblyPrefixes = assemblyPrefixes.ToArray();
             SetupOverrides(overrides);
-            Setup();
         }
 
         T IResolver.Resolve<T>()
         {
+            Setup();
             var serviceName = typeof (T).AssemblyQualifiedName;
             var o = Resolve(serviceName);
 
@@ -42,6 +42,7 @@ namespace CH.IoC.Infrastructure
 
         T[] IResolver.ResolveAll<T>()
         {
+            Setup();
             var o = ResolveAll(typeof (T).AssemblyQualifiedName);
             if (o == null)
                 return new T[] {};
@@ -50,11 +51,13 @@ namespace CH.IoC.Infrastructure
 
         IEnumerable<Tuple<string, IEnumerable<string>>> IResolver.Registered()
         {
+            Setup();
             return _components.Select(kvp => Tuple.Create(kvp.Key, kvp.Value.Select(c => c.Name)));
         }
 
         void IResolver.LoadDynamicAssemblies(IEnumerable<string> directories)
         {
+            Setup();
             var dlls =
                 directories
                     .Where(Directory.Exists)
@@ -85,7 +88,7 @@ namespace CH.IoC.Infrastructure
                 var type = instance.GetType();
                 foreach (var i in type.GetInterfaces())
                 {
-                    RegisterType(type, i, instance);
+                    RegisterType(type, i, new []{instance});
                 }
             }
         }
@@ -95,9 +98,13 @@ namespace CH.IoC.Infrastructure
             object o = null;
             IList<ComponentInfo> componentInfos;
             if (_components.TryGetValue(serviceName, out componentInfos))
-                o = Instance(componentInfos.FirstOrDefault());
+            {
+                var os = Instances(componentInfos.FirstOrDefault());
+                o = os.FirstOrDefault();
+            }
 
             if (o == null)
+                
                 throw new Exception("Could not resolve concrete type for interface: " + serviceName);
 
             return o;
@@ -105,20 +112,16 @@ namespace CH.IoC.Infrastructure
 
         private object ResolveAll(string serviceName)
         {
-            object o = null;
             IList<ComponentInfo> componentInfos;
-            if (_components.TryGetValue(serviceName, out componentInfos))
-            {
-                var a = Array.CreateInstance(componentInfos.First().ServiceType, componentInfos.Count);
-                var instances = componentInfos.Select(Instance).ToArray();
-                for (var i = 0; i < instances.Length; ++i)
-                    a.SetValue(instances[i], i);
-                o = a;
-            }
-            return o;
+            if (!_components.TryGetValue(serviceName, out componentInfos)) return null;
+            var instances = componentInfos.Select(Instances).SelectMany(x=>x).ToArray();
+            var a = Array.CreateInstance(componentInfos.First().ServiceType, instances.Length);
+            for (var i = 0; i < instances.Length; ++i)
+                a.SetValue(instances[i], i);
+            return a;
         }
 
-        private object Instance(ComponentInfo componentInfo)
+        private IEnumerable<object> Instances(ComponentInfo componentInfo)
         {
             if (componentInfo.Instance != null) return componentInfo.Instance;
 
@@ -145,11 +148,23 @@ namespace CH.IoC.Infrastructure
 
             if (componentInfo.Ctor != null)
             {
-                componentInfo.Instance = componentInfo.Ctor.Invoke(parameters);
+                componentInfo.Instance = new []{componentInfo.Ctor.Invoke(parameters)};
             }
             else if (componentInfo.MCtor != null)
             {
-                componentInfo.Instance = componentInfo.MCtor.Invoke(null, parameters);
+                var temp = componentInfo.MCtor.Invoke(null, parameters);
+                switch (componentInfo.RType)
+                {
+                    case DependencyInfo.TypeModifier.None:
+                        componentInfo.Instance = new []{ temp };
+                        break;
+                    case DependencyInfo.TypeModifier.Enum:
+                        componentInfo.Instance = ((IEnumerable<object>) temp);
+                        break;
+                    case DependencyInfo.TypeModifier.Array:
+                        componentInfo.Instance = (object[]) temp;
+                        break;
+                }
             }
 
             return componentInfo.Instance;
@@ -157,21 +172,24 @@ namespace CH.IoC.Infrastructure
 
         private void Setup()
         {
+            if (_setup) return;
+            _setup = true;
             foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
             {
                 _loaded.Add(assembly.FullName);
             }
 
             var directories =
-                (AppDomain.CurrentDomain.SetupInformation.PrivateBinPath ?? string.Empty).Split(Path.PathSeparator)
-                                                                                         .Concat(new[] {"bin"})
-                                                                                         .Select(
-                                                                                             x =>
-                                                                                             Path.Combine(
-                                                                                                 AppDomain.CurrentDomain
-                                                                                                          .SetupInformation
-                                                                                                          .ApplicationBase,
-                                                                                                 x));
+                (AppDomain.CurrentDomain.SetupInformation.PrivateBinPath ?? string.Empty)
+                .Split(Path.PathSeparator)
+                .Concat(new[] {"bin"})
+                .Select(
+                    x =>
+                    Path.Combine(
+                        AppDomain.CurrentDomain
+                        .SetupInformation
+                        .ApplicationBase,
+                        x));
             ((IResolver) this).LoadDynamicAssemblies(directories);
             Wire();
         }
@@ -278,6 +296,20 @@ namespace CH.IoC.Infrastructure
         {
             var name = type.AssemblyQualifiedName;
             var interfaceType = mi.ReturnType;
+            var rtype = DependencyInfo.TypeModifier.None;
+            if (interfaceType.IsGenericType)
+            {
+                if (interfaceType.GetGenericTypeDefinition().Name == "IEnumerable`1")
+                {
+                    interfaceType = interfaceType.GetGenericArguments().First();
+                    rtype = DependencyInfo.TypeModifier.Enum;
+                }
+            }
+            else if (interfaceType.IsArray)
+            {
+                interfaceType = interfaceType.GetElementType();
+                rtype = DependencyInfo.TypeModifier.Array;
+            }
             if (!_components.ContainsKey(interfaceType.AssemblyQualifiedName))
             {
                 _components[interfaceType.AssemblyQualifiedName] = new List<ComponentInfo>();
@@ -291,6 +323,7 @@ namespace CH.IoC.Infrastructure
                     Type = type,
                     ServiceType = interfaceType,
                     MCtor = mi,
+                    RType = rtype,
                     Dependencies = mi
                         .GetParameters()
                         .Select(DependencyInfoFromParameterInfo)
@@ -300,7 +333,7 @@ namespace CH.IoC.Infrastructure
             componentInfos.Add(componentInfo);
         }
 
-        private void RegisterType(Type type, Type interfaceType, object instance = null)
+        private void RegisterType(Type type, Type interfaceType, IEnumerable<object> instance = null)
         {
             var name = type.AssemblyQualifiedName;
             if (!_components.ContainsKey(interfaceType.AssemblyQualifiedName))
@@ -403,11 +436,12 @@ namespace CH.IoC.Infrastructure
         {
             public ConstructorInfo Ctor;
             public IEnumerable<DependencyInfo> Dependencies;
-            public object Instance;
+            public IEnumerable<object> Instance;
             public MethodInfo MCtor;
             public string Name;
             public Type ServiceType;
             public Type @Type;
+            public DependencyInfo.TypeModifier RType;
         }
 
         private class DependencyInfo
