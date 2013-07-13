@@ -180,6 +180,40 @@ namespace CH.IoC.Test
                 Assert.AreEqual(9, e.Foo());
             }
         }
+
+        [Test]
+        public void TestMultipleInterfaceWiring()
+        {
+            var r = new Resolver(new[] {"CH."}) as IResolver;
+            var first = r.Resolve<IFirst>();
+            var second = r.Resolve<ISecond>();
+            Assert.AreSame(first,second);
+        }
+    }
+
+    internal interface IFirst
+    {
+        string Get();
+    }
+
+    internal interface ISecond
+    {
+        string Get();
+    }
+
+    [Wire]
+    internal class DoesBoth : IFirst, ISecond
+    {
+
+        string IFirst.Get()
+        {
+            return "First";
+        }
+
+        string ISecond.Get()
+        {
+            return "Second";
+        }
     }
 
     internal interface ITestWire
