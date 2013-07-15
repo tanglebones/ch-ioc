@@ -189,6 +189,36 @@ namespace CH.IoC.Test
             var second = r.Resolve<ISecond>();
             Assert.AreSame(first,second);
         }
+
+        [Test]
+        public void TestExplictInstance()
+        {
+            var ei = new ExplicitInstance("asdf");
+            var r = new Resolver(new[] {"CH."}, new[] {ei}) as IResolver;
+            var eir = r.Resolve<IExplictInstance>();
+            Assert.AreSame(ei,eir);
+        }
+
+    }
+
+    internal interface IExplictInstance
+    {
+        string Get();
+    }
+
+    sealed class ExplicitInstance : IExplictInstance
+    {
+        private string _arg;
+
+        public ExplicitInstance(string arg)
+        {
+            _arg = arg;
+        }
+
+        string IExplictInstance.Get()
+        {
+            return _arg;
+        }
     }
 
     internal interface IFirst

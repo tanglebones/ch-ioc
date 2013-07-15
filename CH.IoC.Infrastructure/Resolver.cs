@@ -385,7 +385,11 @@ namespace CH.IoC.Infrastructure
                 Type = type,
                 ServiceType = interfaceType,
             };
-            if (instances != null) componentInfo.Instances = instances;
+            if (instances != null)
+            {
+                componentInfo.Instances = instances;
+                componentInfo.Initialized = true;
+            }
             var ctor = type
                 .GetConstructors()
                 .Where(
