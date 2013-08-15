@@ -130,6 +130,10 @@ namespace CH.IoC.Infrastructure
             if (componentInfo.Initialized)
                 return componentInfo.Instances;
 
+            if (componentInfo.Dependencies == null)
+            {
+                throw new Exception("Can't determine component dependencies. Check that " + componentInfo.Type.Name + " has a public ctor.");
+            }
             foreach (var dependencyInfo in componentInfo.Dependencies)
             {
                 if (dependencyInfo.Modifier == DependencyInfo.TypeModifier.None)
