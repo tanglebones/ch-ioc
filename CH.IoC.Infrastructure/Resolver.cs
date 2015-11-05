@@ -130,6 +130,25 @@ namespace CH.IoC.Infrastructure
             if (componentInfo.Initialized)
                 return componentInfo.Instances;
 
+            var existingInstancesOfThisConcreteType =
+                _components.Values.SelectMany(i => i).Where(x => x.Initialized)
+                    .SelectMany(x => x.Instances)
+                    .Where(y =>
+                    {
+                        var type = y.GetType();
+                        return type.FullName == componentInfo.Type.FullName;
+                    }
+                    )
+                    .ToArray();
+
+            if (existingInstancesOfThisConcreteType.Any())
+            {
+                // don't create more than one instance of the concrete type
+                componentInfo.Instances = existingInstancesOfThisConcreteType;
+                componentInfo.Initialized = true;
+                return existingInstancesOfThisConcreteType;
+            }
+
             if (componentInfo.Dependencies == null)
             {
                 throw new Exception("Can't determine component dependencies. Check that " + componentInfo.Type.Name + " has a public ctor.");
@@ -375,53 +394,69 @@ namespace CH.IoC.Infrastructure
 
         private void RegisterType(Type type, Type interfaceType, IList<object> instances = null)
         {
-            var name = type.AssemblyQualifiedName;
-            if (!_components.ContainsKey(interfaceType.AssemblyQualifiedName))
+            try
             {
-                _components[interfaceType.AssemblyQualifiedName] = new List<ComponentInfo>();
-            }
-            var componentInfos = _components[interfaceType.AssemblyQualifiedName];
-            if (componentInfos.Any(x => x.ServiceType == interfaceType && x.Type == type))
-                return;
-            var componentInfo = new ComponentInfo
-            {
-                Name = name,
-                Type = type,
-                ServiceType = interfaceType,
-            };
-            if (instances != null)
-            {
-                componentInfo.Instances = instances;
-                componentInfo.Initialized = true;
-            }
-            var ctor = type
-                .GetConstructors()
-                .Where(
-                    x => x
-                        .GetParameters()
-                        .All(
-                            p =>
-                            {
-                                var pi = p.ParameterType;
-                                return pi.IsInterface ||
-                                       (pi.IsArray &&
-                                        pi.GetElementType()
-                                            .IsInterface);
-                            }
-                        )
-                )
-                .OrderByDescending(x => x.GetParameters().Length)
-                .FirstOrDefault();
+                var name = type.AssemblyQualifiedName;
+                var interfaceName = interfaceType.AssemblyQualifiedName ?? interfaceType.Name;
 
-            componentInfo.Ctor = ctor;
-            if (ctor != null)
-                componentInfo.Dependencies =
-                    ctor
-                        .GetParameters()
-                        .Select(DependencyInfoFromParameterInfo)
-                        .ToArray();
+                if (!_components.ContainsKey(interfaceName))
+                {
+                    _components[interfaceName] = new List<ComponentInfo>();
+                }
 
-            componentInfos.Add(componentInfo);
+                var componentInfos = _components[interfaceName];
+                if (componentInfos.Any(x => x.ServiceType == interfaceType && x.Type == type))
+                    return;
+                var componentInfo = new ComponentInfo
+                {
+                    Name = name,
+                    Type = type,
+                    ServiceType = interfaceType,
+                };
+
+                if (instances != null)
+                {
+                    componentInfo.Instances = instances;
+                    componentInfo.Initialized = true;
+                }
+                var ctor = type
+                    .GetConstructors()
+                    .Where(
+                        x => x
+                            .GetParameters()
+                            .All(
+                                p =>
+                                {
+                                    var pi = p.ParameterType;
+                                    return pi.IsInterface ||
+                                        (pi.IsArray &&
+                                            pi.GetElementType()
+                                                .IsInterface);
+                                }
+                            )
+                    )
+                    .OrderByDescending(x => x.GetParameters().Length)
+                    .FirstOrDefault();
+
+                componentInfo.Ctor = ctor;
+                if (ctor != null)
+                    componentInfo.Dependencies =
+                        ctor
+                            .GetParameters()
+                            .Select(DependencyInfoFromParameterInfo)
+                            .ToArray();
+
+                componentInfos.Add(componentInfo);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("- Component name={0} type={1} ServiceType={2}\n{3}", 
+                    type.AssemblyQualifiedName, 
+                    type.FullName,
+                    interfaceType.FullName,
+                    ex);
+                throw;
+            }
         }
 
         private static DependencyInfo DependencyInfoFromParameterInfo(ParameterInfo x)

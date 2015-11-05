@@ -187,7 +187,33 @@ namespace CH.IoC.Test
             var r = new Resolver(new[] {"CH."}) as IResolver;
             var first = r.Resolve<IFirst>();
             var second = r.Resolve<ISecond>();
-            Assert.AreSame(first,second);
+            var afirst = r.ResolveAll<IFirst>().ToArray();
+            var asecond = r.ResolveAll<ISecond>().ToArray();
+            Assert.AreEqual(1, afirst.Length);
+            Assert.AreEqual(1, asecond.Length);
+            Assert.AreSame(first, afirst[0]);
+            Assert.AreSame(first, second);
+            Assert.AreSame(first, asecond[0]);
+        }
+
+        [Test]
+        [Ignore("TODO: make generics work")]
+        public void TestMultipleGenericInterfaceViaAllWiring()
+        {
+            var r = new Resolver(new[] { "CH." }) as IResolver;
+            var first = r.Resolve<ISet<int>>();
+            var second = r.Resolve<IGet<int>>();
+            var afirst = r.ResolveAll<ISet<int>>().ToArray();
+            var asecond = r.ResolveAll<IGet<int>>().ToArray();
+            Assert.AreEqual(1, afirst.Length);
+            Assert.AreEqual(1, asecond.Length);
+
+            Assert.AreSame(first, afirst[0]);
+            Assert.AreSame(first, second);
+            Assert.AreSame(first, asecond[0]);
+            var sg = r.Resolve<ITakeSetGet<int>>();
+            Assert.AreSame(first, sg.Set);
+            Assert.AreSame(first, sg.Get);
         }
 
         [Test]
@@ -234,6 +260,10 @@ namespace CH.IoC.Test
     [Wire]
     internal class DoesBoth : IFirst, ISecond
     {
+        public DoesBoth()
+        {
+            Console.WriteLine("{0}", Environment.StackTrace);
+        }
 
         string IFirst.Get()
         {
@@ -244,6 +274,60 @@ namespace CH.IoC.Test
         {
             return "Second";
         }
+    }
+
+    internal interface ISet<in T>
+    {
+        void Set(T t);
+    }
+
+    internal interface IGet<out T>
+    {
+        T Get();
+    }
+
+    [Wire]
+    internal class GetSet<T>: IGet<T>, ISet<T>
+    {
+        private T _t;
+        T IGet<T>.Get()
+        {
+            return _t;
+        }
+
+        void ISet<T>.Set(T t)
+        {
+            _t = t;
+        }
+    }
+
+    [Wire]
+    internal class TakeSetGet<T> : ITakeSetGet<T>
+    {
+        private readonly IGet<T> _get;
+        private ISet<T> _set;
+
+        public TakeSetGet(ISet<T> set, IGet<T> get)
+        {
+            _set = set;
+            _get = get;
+        }
+
+        ISet<T> ITakeSetGet<T>.Set
+        {
+            get { return _set; }
+        }
+
+        IGet<T> ITakeSetGet<T>.Get
+        {
+            get { return _get; }
+        }
+    }
+
+    internal interface ITakeSetGet<T>
+    {
+        ISet<T> Set { get; }
+        IGet<T> Get { get; }  
     }
 
     internal interface ITestWire
